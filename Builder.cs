@@ -13,17 +13,24 @@ using System.Threading.Tasks;
 
 namespace BuildTask
 {
-    class Builder
+    internal class Builder
     {
         bool IsFlag(string arg)
         {
             return arg[0] == '-' || arg[0] == '/';
         }
 
-        (bool no_error, Arguments arguments) ParseArguments(string[] Args)
+        bool error = false;
+
+        private void ErrorHandler(string _message)
         {
-            bool error = false;
-            Action<string> ErrorHandler = (message) => { Console.WriteLine(message); error = true; };
+            Log.WriteLine(_message);
+            error = true;
+        }
+
+        private (bool no_error, Arguments arguments) ParseArguments(string[] Args)
+        {
+            error = false;
             Arguments arguments = new Arguments();
             var arg_count = Args.Length;
             for (var arg_index = 0; arg_index < arg_count; ++arg_index)
@@ -51,7 +58,12 @@ namespace BuildTask
                 }
                 else
                 {
-                    arguments.SourceFilenames.Add(Args[arg_index]);
+                    if (File.Exists(Args[arg_index]))
+                        arguments.SourceFilenames.Add(Args[arg_index]);
+                    else
+                    {
+                        ErrorHandler($"Can not find the source file \"{Args[arg_index]}\"!");
+                    }
                 }
             }
             if (arguments.Compiler.WasCrashed) ErrorHandler("Compiler defined multiple times!");
@@ -63,9 +75,9 @@ namespace BuildTask
         bool AreArgumentValids(Arguments arguments)
         {
             bool error = false;
-            if (!arguments.Compiler.HasValue) { error = true; Console.WriteLine("No compiler specified! Please use -clang or -msvc"); }
-            if (!arguments.OutputFilename.HasValue) { error = true; Console.WriteLine("No output filename specified! Please use -output <filepath>"); }
-            if (arguments.SourceFilenames.Count == 0) { error = true; Console.WriteLine("No source filename specified! You must specify at least one source filename."); }
+            if (!arguments.Compiler.HasValue) { error = true; Log.WriteLine("No compiler specified! Please use -clang or -msvc"); }
+            if (!arguments.OutputFilename.HasValue) { error = true; Log.WriteLine("No output filename specified! Please use -output <filepath>"); }
+            if (arguments.SourceFilenames.Count == 0) { error = true; Log.WriteLine("No source filename specified! You must specify at least one source filename."); }
             return !error;
         }
 
@@ -75,7 +87,7 @@ namespace BuildTask
             arg_ok &= AreArgumentValids(args);
             if (!arg_ok)
             {
-                Console.WriteLine("Bad arguments!");
+                Log.WriteLine("Bad arguments!");
                 return 1;
             }
             //const string project_filename = "project.json";
@@ -107,26 +119,26 @@ namespace BuildTask
                 }
                 else
                 {
-                    Console.WriteLine($"Fail to find the source file \"{filename}\"!");
+                    Log.WriteLine($"Fail to find the source file \"{filename}\"!");
                     error = true;
                 }
             }
             if (error)
             {
-                Console.WriteLine("Bad source files!");
+                Log.WriteLine("Bad source files!");
                 return 1;
             }
-            Console.WriteLine($"Most recent source file time: {most_recent_source_file_time}");
+            Log.WriteLine($"Most recent source file time: {most_recent_source_file_time}");
 
             if (!args.ForceCompilation)
             {
                 var outputFileInfo = new FileInfo(args.OutputFilename.Value);
                 if (outputFileInfo.Exists)
                 {
-                    Console.WriteLine($"Output file time: {outputFileInfo.LastWriteTime}");
+                    Log.WriteLine($"Output file time: {outputFileInfo.LastWriteTime}");
                     if (outputFileInfo.LastWriteTime > most_recent_source_file_time)
                     {
-                        Console.WriteLine("No update needed.");
+                        Log.WriteLine("No update needed.");
                         return 0;
                     }
                 }
@@ -146,4 +158,5 @@ namespace BuildTask
             return exitCode;
         }
     }
+
 }

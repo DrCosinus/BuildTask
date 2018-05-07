@@ -68,6 +68,7 @@
     <Compile Include="EDebugLevel.cs" />
     <Compile Include="EWarningLevel.cs" />
     <Compile Include="ICompiler.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WriteCounter.cs" />

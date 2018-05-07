@@ -17,5 +17,9 @@ namespace BuildTask
 
         public T GetValueOrDefault(T _default_value) => HasValue ? Value : _default_value;
         private void SetValue(T _value) { value_ = _value; writing_count_++; }
+        public override string ToString()
+        {
+            return $"{(HasValue? (WasCrashed ? $"!CRASHED! {value_}" : $"{value_}") : "(unset)")}";
+        }
     }
 }

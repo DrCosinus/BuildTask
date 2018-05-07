@@ -28,7 +28,7 @@ namespace BuildTask.Compilers
                             );
                         if (filtered.Count() == 1)
                         {
-                            Console.WriteLine($"Found MSVC \"{candidate}\"...");
+                            Log.WriteLine($"Found MSVC \"{candidate}\"...");
                             MSVCPath = filtered.First();
                             return;
                         }

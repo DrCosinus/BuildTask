@@ -33,7 +33,7 @@ namespace BuildTask
             SetupEnvironmentVariables();
 
             var arguments = CompilationParameters;
-            Console.WriteLine(arguments);
+            Log.WriteLine(arguments);
 
             var process = new Process();
             process.StartInfo.FileName = ExecutableName;
@@ -50,7 +50,7 @@ namespace BuildTask
             process.BeginErrorReadLine();
             process.WaitForExit();
 
-            Console.WriteLine(OutputBuilder);
+            Log.WriteLine(OutputBuilder);
             var exit_code = process.ExitCode;
             process.Close();
 
