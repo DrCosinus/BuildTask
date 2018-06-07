@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="AbstractCompiler.cs" />
     <Compile Include="Arguments.cs" />
+    <Compile Include="BuildConfig.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="CompilerFactory.cs" />
     <Compile Include="Compilers\Clang.cs" />

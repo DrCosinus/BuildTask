@@ -111,9 +111,7 @@ namespace BuildTask.Compilers
 
         public MSVC()
         {
-//            var configuration = new SetupConfiguration();
-//            var instance = configuration.GetInstanceForCurrentProcess();
-//            var id = instance?.GetInstanceId();
+            DiscoverVisualStudio();
 
             var drives = DriveInfo.GetDrives().Select(d => d.Name);
             string[] vintages = { "Preview", "2017" };
@@ -149,6 +147,111 @@ namespace BuildTask.Compilers
             }
             throw new Exception("Can not find MSVC!");
         }
+
+        private void DiscoverVisualStudio()
+        {
+            var query = new SetupConfiguration();
+            var query2 = (ISetupConfiguration2)query;
+            var e = query2.EnumAllInstances();
+
+            var helper = (ISetupHelper)query;
+
+            int fetched;
+            var instances = new ISetupInstance[1];
+            do
+            {
+                e.Next(1, instances, out fetched);
+                if (fetched > 0)
+                {
+                    PrintInstance(instances[0], helper);
+                }
+            }
+            while (fetched > 0);
+        }
+
+        private static void PrintInstance(ISetupInstance instance, ISetupHelper helper)
+        {
+            var instance2 = (ISetupInstance2)instance;
+            var state = instance2.GetState();
+            Log.WriteLine($"InstanceId: {instance2.GetInstanceId()} ({(state == InstanceState.Complete ? "Complete" : "Incomplete")})");
+
+            var installationVersion = instance.GetInstallationVersion();
+            var version = helper.ParseVersion(installationVersion);
+
+            Log.WriteLine($"InstallationVersion: {installationVersion} ({version})");
+
+            if ((state & InstanceState.Local) == InstanceState.Local)
+            {
+                Log.WriteLine($"InstallationPath: {instance2.GetInstallationPath()}");
+            }
+
+            var catalog = instance as ISetupInstanceCatalog;
+            if (catalog != null)
+            {
+                Log.WriteLine($"IsPrerelease: {catalog.IsPrerelease()}");
+            }
+
+            Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
+            Log.WriteLine($"Description: \"{instance2.GetDescription()}\"");
+            Log.WriteLine($"DisplayName: \"{instance2.GetDisplayName()}\"");
+            Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
+            Log.WriteLine($"InstallationName: \"{instance2.GetInstallationName()}\"");
+            Log.WriteLine($"InstallationPath: \"{instance2.GetInstallationPath()}\"");
+            Log.WriteLine($"InstallationVersion: \"{instance2.GetInstallationVersion()}\"");
+            Log.WriteLine($"InstanceId: \"{instance2.GetInstanceId()}\"");
+            //Print("Packages:", instance2.GetPackages());
+            Print("Product:", instance2.GetProduct());
+            Log.WriteLine($"ProductPath: \"{instance2.GetProductPath()}\"");
+            Print("Properties:", instance2.GetProperties());
+            Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
+
+            Log.WriteLine();
+        }
+
+        private static void Print(string intro, ISetupPropertyStore properties)
+        {
+            Log.WriteLine(intro);
+            Log.WriteLine("{");
+            Log.PushIndent();
+            foreach (var propertyName in properties.GetNames())
+            {
+                Log.WriteLine($"{propertyName}= \"{properties.GetValue(propertyName)}\"");
+            }
+            Log.PopIndent();
+            Log.WriteLine("}");
+        }
+
+        private static void Print(string intro, ISetupPackageReference[] packages)
+        {
+            Log.WriteLine(intro);
+            Log.WriteLine("{");
+            Log.PushIndent();
+            foreach (var package in packages)
+            {
+                Print("Package:", package);
+            }
+            Log.PopIndent();
+            Log.WriteLine("}");
+        }
+
+        private static void Print(string intro, ISetupPackageReference package)
+        {
+            Log.WriteLine(intro);
+            Log.WriteLine("{");
+            Log.PushIndent();
+            Log.WriteLine($"Branch: \"{package.GetBranch()}\"");
+            Log.WriteLine($"Chip: \"{package.GetChip()}\"");
+            Log.WriteLine($"Id: \"{package.GetId()}\"");
+            Log.WriteLine($"IsExtension: \"{package.GetIsExtension()}\"");
+            Log.WriteLine($"IsLanguage: \"{package.GetLanguage()}\"");
+            Log.WriteLine($"Type: \"{package.GetType()}\"");
+            Log.WriteLine($"UniqueId: \"{package.GetUniqueId()}\"");
+            Log.WriteLine($"Version: \"{package.GetVersion()}\"");
+            Log.PopIndent();
+            Log.WriteLine("}");
+        }
+
+
         private static string MSVCPath;
         private static string WindowsKitPath => @"C:\Program Files (x86)\Windows Kits"; // should be deduced HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots\KitsRoot10
         private static string Windows10KitPath(string _group) => $@"{WindowsKitPath}\10\{_group}\10.0.16299.0"; // should be deduced

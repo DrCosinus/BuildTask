@@ -83,6 +83,8 @@ namespace BuildTask
 
         internal int Run(string[] commandline_args)
         {
+            //var config = new BuildConfig("builds.txt");
+
             var (arg_ok, args) = ParseArguments(commandline_args);
             arg_ok &= AreArgumentValids(args);
             if (!arg_ok)
