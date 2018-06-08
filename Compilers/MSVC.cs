@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.Setup.Configuration;
+using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +13,8 @@ namespace BuildTask.Compilers
     class MSVC : AbstractCompiler
     {
         // https://docs.microsoft.com/en-us/visualstudio/extensibility/breaking-changes-2017
+        // https://stackoverflow.com/questions/42916299/access-visual-studio-2017s-private-registry-hive
+        // https://stackoverflow.com/questions/2917309/regloadappkey-working-fine-on-32-bit-os-failing-on-64-bit-os-even-if-both-proc
 
         // we need a windows kit abstraction
 
@@ -150,11 +154,21 @@ namespace BuildTask.Compilers
 
         private void DiscoverVisualStudio()
         {
+            var vs2017 = DiscoverModernVisualStudio("15.0"); // VS 2017
+            if (!string.IsNullOrEmpty(vs2017))
+            {
+                Log.WriteLine("Compiler: " + vs2017);
+            }
+        }
+
+        // from Visual Studio 2017, and future releases
+        private string DiscoverModernVisualStudio(string vsWantedVersion)
+        {
             var query = new SetupConfiguration();
             var query2 = (ISetupConfiguration2)query;
             var e = query2.EnumAllInstances();
 
-            var helper = (ISetupHelper)query;
+            //var helper = (ISetupHelper)query;
 
             int fetched;
             var instances = new ISetupInstance[1];
@@ -163,18 +177,49 @@ namespace BuildTask.Compilers
                 e.Next(1, instances, out fetched);
                 if (fetched > 0)
                 {
-                    PrintInstance(instances[0], helper);
+                    return Parse(instances[0], vsWantedVersion);
                 }
             }
             while (fetched > 0);
+            return null;
         }
 
-        private static void PrintInstance(ISetupInstance instance, ISetupHelper helper)
+        private static string Parse(ISetupInstance instance, string vsWantedVersion /*, ISetupHelper helper*/)
         {
             var instance2 = (ISetupInstance2)instance;
             var state = instance2.GetState();
-            Log.WriteLine($"InstanceId: {instance2.GetInstanceId()} ({(state == InstanceState.Complete ? "Complete" : "Incomplete")})");
+            // Log.WriteLine($"InstanceId: {instance2.GetInstanceId()} ({(state == InstanceState.Complete ? "Complete" : "Incomplete")})");
 
+            //VS 2017
+            var hKey = RegistryNative.RegLoadAppKey($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio\{ vsWantedVersion }_{ instance2.GetInstanceId() }\privateregistry.bin");
+            using (var safeRegistryHandle = new SafeRegistryHandle(new IntPtr(hKey), true))
+            {
+                if (safeRegistryHandle != null)
+                {
+                    using (var appKey = RegistryKey.FromHandle(safeRegistryHandle))
+                    {
+                        if (appKey != null)
+                        {
+                            var vcKey = appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }_Config\VC");
+                            if (vcKey != null)
+                            {
+                                var t = vcKey.GetSubKeyNames();
+                                var vc19Key = vcKey.OpenSubKey(vcKey.GetSubKeyNames()[0]);
+                                string host = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                                string target = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                                var compilerKey = vc19Key.OpenSubKey($@"{ host }\{ target }"); // host\target
+
+                                return compilerKey.GetValue("Compiler") as string;
+                                //Print(appKey);
+                                //Print(appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }"));
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+                // RegistryKey.FromHandle()
+/*
             var installationVersion = instance.GetInstallationVersion();
             var version = helper.ParseVersion(installationVersion);
 
@@ -199,13 +244,31 @@ namespace BuildTask.Compilers
             Log.WriteLine($"InstallationPath: \"{instance2.GetInstallationPath()}\"");
             Log.WriteLine($"InstallationVersion: \"{instance2.GetInstallationVersion()}\"");
             Log.WriteLine($"InstanceId: \"{instance2.GetInstanceId()}\"");
-            //Print("Packages:", instance2.GetPackages());
+            // Print("Packages:", instance2.GetPackages());
             Print("Product:", instance2.GetProduct());
             Log.WriteLine($"ProductPath: \"{instance2.GetProductPath()}\"");
             Print("Properties:", instance2.GetProperties());
             Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
-
+*/
             Log.WriteLine();
+        }
+
+        private static void Print(RegistryKey key)
+        {
+            foreach(var subkeyName in key.GetSubKeyNames())
+            {
+                var subkey = key.OpenSubKey(subkeyName);
+                var subpath = subkey.Name;
+                Log.WriteLine(subpath);
+                Log.PushIndent();
+                Print(subkey);
+                Log.PopIndent();
+            }
+
+            foreach (var valueName in key.GetValueNames())
+            {
+                Log.WriteLine($"- { valueName } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = { key.GetValue(valueName) }");
+            }
         }
 
         private static void Print(string intro, ISetupPropertyStore properties)
