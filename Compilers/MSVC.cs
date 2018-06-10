@@ -152,17 +152,28 @@ namespace BuildTask.Compilers
             throw new Exception("Can not find MSVC!");
         }
 
+        class VisualStudioInfo
+        {
+            public string CompilerPath;
+            public string IncludesPath;
+        }
+
         private void DiscoverVisualStudio()
         {
             var vs2017 = DiscoverModernVisualStudio("15.0"); // VS 2017
-            if (!string.IsNullOrEmpty(vs2017))
+            if (vs2017!=null)
             {
-                Log.WriteLine("Compiler: " + vs2017);
+                Log.WriteLine("Compiler: " + vs2017.CompilerPath);
+                Log.WriteLine("Include: " + vs2017.IncludesPath);
+
+                // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots\ -> KitsRoot10
+                string WindowsKit10 = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots", "KitsRoot10", "") as string;
+                Log.WriteLine("Windows Kit 10: " + WindowsKit10);
             }
         }
 
         // from Visual Studio 2017, and future releases
-        private string DiscoverModernVisualStudio(string vsWantedVersion)
+        private VisualStudioInfo DiscoverModernVisualStudio(string vsWantedVersion)
         {
             var query = new SetupConfiguration();
             var query2 = (ISetupConfiguration2)query;
@@ -184,7 +195,7 @@ namespace BuildTask.Compilers
             return null;
         }
 
-        private static string Parse(ISetupInstance instance, string vsWantedVersion /*, ISetupHelper helper*/)
+        private static VisualStudioInfo Parse(ISetupInstance instance, string vsWantedVersion /*, ISetupHelper helper*/)
         {
             var instance2 = (ISetupInstance2)instance;
             var state = instance2.GetState();
@@ -209,8 +220,17 @@ namespace BuildTask.Compilers
                                 string target = Environment.Is64BitOperatingSystem ? "x64" : "x86";
                                 var compilerKey = vc19Key.OpenSubKey($@"{ host }\{ target }"); // host\target
 
-                                return compilerKey.GetValue("Compiler") as string;
                                 //Print(appKey);
+
+                                var compiler_path = compilerKey.GetValue("Compiler") as string;
+                                var folder = Path.GetDirectoryName(compiler_path);
+                                while (folder!=null && !Directory.Exists(Path.Combine(folder, "include")))
+                                {
+                                    folder = Directory.GetParent(folder)?.FullName;
+                                }
+                                var include_path = Path.Combine(folder, "include");
+
+                                return new VisualStudioInfo { CompilerPath = compiler_path, IncludesPath = include_path };
                                 //Print(appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }"));
                             }
                         }
@@ -267,7 +287,7 @@ namespace BuildTask.Compilers
 
             foreach (var valueName in key.GetValueNames())
             {
-                Log.WriteLine($"- { valueName } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = { key.GetValue(valueName) }");
+                Log.WriteLine($"- { (string.IsNullOrEmpty(valueName)?"(default value)":valueName) } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = \"{ key.GetValue(valueName) }\"");
             }
         }
 
