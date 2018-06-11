@@ -20,6 +20,11 @@ namespace BuildTask
             internal string name;
             internal NeedValue needValue;
             uint valueCount = 0;
+
+            public override string ToString()
+            {
+                return $"-{name}{ (needValue==NeedValue.OneValue?"(string)":"(bool)") }";
+            }
         }
 
         const string keyGroupName = "key";
@@ -41,10 +46,21 @@ namespace BuildTask
             }
             flags_.Add(new Flag { name = _flagName, needValue = _flagNeedValue });
         }
+
+        // [-\/](?<key>[^ :=]+)(?:[ :=](?<value>[^ ]+))?(?:\s|$)
+        // [-\/](?:(?<key>fofo|compiler|force)(?:[ :=](?<value>[^-](?:(?!\s|$).)*)))|(?<key0>fuck)
         public void Parse(string[] commandline_args)
         {
+            string all_args = string.Join(" ", commandline_args);
+            string OneValueFlags = string.Join("|", flags_.Where(f => f.needValue == NeedValue.OneValue).Select(f => f.name));
+            string NoValueFlags = string.Join("|", flags_.Where(f => f.needValue == NeedValue.NoValue).Select(f => f.name));
+
+            var NoValueRegex = new Regex($@"[/-](?<{ keyGroupName }>{ NoValueFlags })(?:\s|$)"); // todo: manage double quotes
+            var OneValueRegex = new Regex($@"[/-](?<{ keyGroupName }>{ OneValueFlags })[ :=](?<{ valueGroupName }>(?:((?!\s|$).)+))(?:\s|$)"); // todo: manage double quotes
+            var noval = NoValueRegex.Matches(all_args);
+            var oneval = OneValueRegex.Matches(all_args);
             //string pending_definition = null;
-            foreach(var commandline_arg in commandline_args)
+            foreach (var commandline_arg in commandline_args)
             {
                 //if (pending_definition!=null)
                 //{
