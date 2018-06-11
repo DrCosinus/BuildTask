@@ -27,11 +27,11 @@ Currently, many assumptions I made work only on my PC.
 
 For now warning level is set to "high"
 
-| Warning Levels          | clang                   | MSVC
-|-------------------------|-------------------------|-------
-| none                    |                         | /W0
-| severe                  | -Wall                   | /W1
-| significant             | -Wall -pedantic         | /W2
-| production              | -Wall -pedantic         | /W3
-| informational (default) | -Wall -pedantic -Wextra | /W4
-| nighmare                | -Wall -pedantic -Wextra | /Wall
+| Warning Levels          | clang                                | MSVC
+|-------------------------|--------------------------------------|-------
+| none                    |                                      | /W0
+| severe                  | -Wall                                | /W1
+| significant             | -Wall -pedantic                      | /W2
+| production              | -Wall -pedantic                      | /W3
+| informational (default) | -Wall -pedantic -Wextra              | /W4
+| nighmare                | -Wall -pedantic -Wextra -Weverything | /Wall

@@ -83,6 +83,18 @@ namespace BuildTask
 
         internal int Run(string[] commandline_args)
         {
+            var commandLine = new CommandLine();
+            commandLine.RegisterFlag("clang", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("msvc", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("debug", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("ndebug", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("force", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("warnings_are_errors", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("output", CommandLine.NeedValue.OneValue);
+            commandLine.RegisterFlag("compiler", CommandLine.NeedValue.OneValue);
+            commandLine.RegisterFlag("warning_level", CommandLine.NeedValue.OneValue);
+
+            commandLine.Parse(new string[] { "source.cpp", "-fofo", "source.h", "-compiler:msvc", "-force:no" });
             //var config = new BuildConfig("builds.txt");
 
             var (arg_ok, args) = ParseArguments(commandline_args);
