@@ -15,7 +15,7 @@ namespace BuildTask
             OneValue,
         }
 
-        private class Flag
+        private class FlagDefinition
         {
             internal string name;
             internal NeedValue needValue;
@@ -23,7 +23,7 @@ namespace BuildTask
 
             public override string ToString()
             {
-                return $"-{name}{ (needValue==NeedValue.OneValue?"(string)":"(bool)") }";
+                return $"-{name}{ (needValue==NeedValue.OneValue?"(one value)":"(no value)") }";
             }
         }
 
@@ -35,7 +35,7 @@ namespace BuildTask
         Regex regexNotADefinition = new Regex("^[^-/:=][^:=]*$", RegexOptions.Compiled | RegexOptions.Singleline);
         Dictionary<string, string> definitions_ = new Dictionary<string, string>();
         List<string> files_ = new List<string>();
-        List<Flag> flags_ = new List<Flag>();
+        List<FlagDefinition> flags_ = new List<FlagDefinition>();
 
         internal void RegisterFlag(string _flagName, NeedValue _flagNeedValue = NeedValue.NoValue)
         {
@@ -44,8 +44,10 @@ namespace BuildTask
                 Log.WriteLine($"Flag \"{ _flagName }\" already registred!");
                 return;
             }
-            flags_.Add(new Flag { name = _flagName, needValue = _flagNeedValue });
+            flags_.Add(new FlagDefinition { name = _flagName, needValue = _flagNeedValue });
         }
+
+
 
         // [-\/](?<key>[^ :=]+)(?:[ :=](?<value>[^ ]+))?(?:\s|$)
         // [-\/](?:(?<key>fofo|compiler|force)(?:[ :=](?<value>[^-](?:(?!\s|$).)*)))|(?<key0>fuck)
@@ -59,6 +61,7 @@ namespace BuildTask
             var OneValueRegex = new Regex($@"[/-](?<{ keyGroupName }>{ OneValueFlags })[ :=](?<{ valueGroupName }>(?:((?!\s|$).)+))(?:\s|$)"); // todo: manage double quotes
             var noval = NoValueRegex.Matches(all_args);
             var oneval = OneValueRegex.Matches(all_args);
+            noval.Enumerate();
             //string pending_definition = null;
             foreach (var commandline_arg in commandline_args)
             {

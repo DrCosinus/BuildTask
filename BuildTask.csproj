@@ -65,6 +65,7 @@
     <Compile Include="Arguments.cs" />
     <Compile Include="BuildConfig.cs" />
     <Compile Include="Builder.cs" />
+    <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CommandLine.cs" />
     <Compile Include="CompilerFactory.cs" />
     <Compile Include="Compilers\Clang.cs" />
