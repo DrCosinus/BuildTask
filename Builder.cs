@@ -83,20 +83,17 @@ namespace BuildTask
 
         internal int Run(string[] commandline_args)
         {
-            var json =
-@"{
-    ""import"" : [ ""wit/wit.blueprint.json"", ""tdd/tdd.blueprint.json"" ],
-    ""project"":
-    {
-                ""name"": ""nonintegral_enum_tests"",
-        ""dependencies"": [ ""tdd"", ""wit"" ],
-        ""sources"": ""enum.cpp"",
-        ""output"": ""bin/$(project_name)_$(compiler_name)_$(optimization).exe""
-    }
-}";
+            var blueprintManager = new BlueprintManager();
+            blueprintManager.Import("playground.blueprint.json");
+            blueprintManager.DumpProjectNames();
 
-            var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
-            var res = serializer.DeserializeObject(json);
+            string touched_filename = "tdd/simple_tests.hpp";
+            Log.WriteLine($@"Modification of ""{ touched_filename }"" will induce the compilation of following projects:");
+            var project_to_compile = blueprintManager.Touch(touched_filename);
+            foreach (var pj in blueprintManager.Touch(touched_filename))
+            {
+                Log.WriteLine($@"- ""{ pj.Name }""");
+            }
 
             var commandLine = new CommandLine();
             commandLine.RegisterFlag("clang", CommandLine.NeedValue.NoValue);
@@ -108,9 +105,9 @@ namespace BuildTask
             commandLine.RegisterFlag("output", CommandLine.NeedValue.OneValue);
             commandLine.RegisterFlag("compiler", CommandLine.NeedValue.OneValue);
             commandLine.RegisterFlag("warning_level", CommandLine.NeedValue.OneValue);
+            commandLine.RegisterFlag("blueprint", CommandLine.NeedValue.OneValue);
 
             commandLine.Parse(new string[] { "source.cpp", "-fofo", "source.h", "-compiler:msvc", "-force:no" });
-            //var config = new BuildConfig("builds.txt");
 
             var (arg_ok, args) = ParseArguments(commandline_args);
             arg_ok &= AreArgumentValids(args);
@@ -119,17 +116,7 @@ namespace BuildTask
                 Log.WriteLine("Bad arguments!");
                 return 1;
             }
-            //const string project_filename = "project.json";
-            //if (File.Exists(project_filename))
-            //{
-            //    using (var reader = new StreamReader(project_filename))
-            //    {
-            //        string json = reader.ReadToEnd();
-            //        XmlDocument
-            //        JsonTextReader
-            //        JsonConvert.Dese
-            //    }
-            //}
+
             // header only => try to compile associated tests source file
             if (args.SourceFilenames.Count == 1 && args.SourceFilenames[0].EndsWith(".h"))
             {
