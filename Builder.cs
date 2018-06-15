@@ -83,6 +83,21 @@ namespace BuildTask
 
         internal int Run(string[] commandline_args)
         {
+            var json =
+@"{
+    ""import"" : [ ""wit/wit.blueprint.json"", ""tdd/tdd.blueprint.json"" ],
+    ""project"":
+    {
+                ""name"": ""nonintegral_enum_tests"",
+        ""dependencies"": [ ""tdd"", ""wit"" ],
+        ""sources"": ""enum.cpp"",
+        ""output"": ""bin/$(project_name)_$(compiler_name)_$(optimization).exe""
+    }
+}";
+
+            var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+            var res = serializer.DeserializeObject(json);
+
             var commandLine = new CommandLine();
             commandLine.RegisterFlag("clang", CommandLine.NeedValue.NoValue);
             commandLine.RegisterFlag("msvc", CommandLine.NeedValue.NoValue);
