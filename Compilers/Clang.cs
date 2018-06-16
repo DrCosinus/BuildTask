@@ -27,8 +27,8 @@ namespace BuildTask.Compilers
             {
                 case EWarningLevel.None: break;
                 case EWarningLevel.Low: parameters.Add("-Wall"); break;
-                case EWarningLevel.MediumLow: parameters.Add("-Wall -pedantic"); break;
-                case EWarningLevel.MediumHigh: parameters.Add("-Wall -pedantic"); break;
+                case EWarningLevel.Few: parameters.Add("-Wall -pedantic"); break;
+                case EWarningLevel.Medium: parameters.Add("-Wall -pedantic"); break;
                 case EWarningLevel.High: parameters.Add("-Wall -pedantic -Wextra"); break;
                 case EWarningLevel.Max: parameters.Add("-Wall -pedantic -Wextra -Weverything"); break; // should consider to disable the C++98, C++03 specific warnings
                 default: goto case EWarningLevel.Low;

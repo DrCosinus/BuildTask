@@ -112,43 +112,65 @@ namespace BuildTask
             public List<string> Headers;
             public string Output;
             public EWarningLevel WarningLevel;
+
+            public override string ToString()
+            {
+                return $@"Project""{ Name }""";
+            }
+
+            internal object ResolveOutput(Dictionary<string, string> _variables)
+            {
+                string result = Output.ReplaceVariable("project_name", Name);
+                foreach (var kv in _variables)
+                {
+                    result = result.ReplaceVariable(kv.Key, kv.Value);
+                }
+
+                return result;
+            }
         }
 
-        internal IEnumerable<Project> Touch(string path)
+        internal IEnumerable<Project> Touch(IEnumerable<string> paths)
         {
-            var fullpath = Path.GetFullPath(path);
             List<Project> coverage = new List<Project>();
             var projs = projects.Select(kv => kv.Value);
-            // the projects which include this file
-            var new_projects_to_build = projs.Where(proj =>
-            {
-                return
-                    ((proj.Sources?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0)
-                    || ((proj.Headers?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0);
-            }).ToList();
-            if (new_projects_to_build.Count != 0)
-            {
-                coverage.AddRange(new_projects_to_build);
 
-                bool finish = false;
-                while (!finish)
+            foreach (var path in paths)
+            {
+                var fullpath = Path.GetFullPath(path);
+                // the projects which include this file
+                var new_projects_to_build = projs.Where(proj =>
                 {
-                    // now we need the project which depends on
-                    var depending_projects = projs.Except(coverage).Where(proj =>
-                    {
-                        if (proj.Dependencies == null)
-                            return false;
-                        return proj.Dependencies.Intersect(new_projects_to_build.Select(pj => pj.Name)).Count() != 0;
-                    }).ToList();
+                    return
+                        ((proj.Sources?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0)
+                        || ((proj.Headers?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0);
+                }).ToList();
+                if (new_projects_to_build.Count != 0)
+                {
+                    coverage.AddRange(new_projects_to_build);
+                    projs = projs.Except(new_projects_to_build).ToArray();
 
-                    if (depending_projects.Count != 0)
+                    bool finish = false;
+                    while (!finish)
                     {
-                        coverage.AddRange(depending_projects);
-                        new_projects_to_build = depending_projects;
-                    }
-                    else
-                    {
-                        finish = true;
+                        // now we need the project which depends on
+                        var depending_projects = projs.Where(proj =>
+                        {
+                            if (proj.Dependencies == null)
+                                return false;
+                            return proj.Dependencies.Intersect(new_projects_to_build.Select(pj => pj.Name)).Count() != 0;
+                        }).ToList();
+
+                        if (depending_projects.Count != 0)
+                        {
+                            coverage.AddRange(depending_projects);
+                            projs = projs.Except(depending_projects).ToArray();
+                            new_projects_to_build = depending_projects;
+                        }
+                        else
+                        {
+                            finish = true;
+                        }
                     }
                 }
             }

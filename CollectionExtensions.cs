@@ -9,8 +9,10 @@ namespace BuildTask
         public static IEnumerable<Match> Enumerate(this MatchCollection matchCollection)
         {
             var enumerator = matchCollection.GetEnumerator();
-
-            yield break;
+            while(enumerator.MoveNext())
+            {
+                yield return enumerator.Current as Match;
+            }
         }
     }
 }

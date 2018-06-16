@@ -20,84 +20,109 @@ namespace BuildTask
             return arg[0] == '-' || arg[0] == '/';
         }
 
-        bool error = false;
-
-        private void ErrorHandler(string _message)
-        {
-            Log.WriteLine(_message);
-            error = true;
-        }
-
-        private (bool no_error, Arguments arguments) ParseArguments(string[] Args)
-        {
-            error = false;
-            Arguments arguments = new Arguments();
-            var arg_count = Args.Length;
-            for (var arg_index = 0; arg_index < arg_count; ++arg_index)
-            {
-                if (IsFlag(Args[arg_index]))
-                {
-                    string option = Args[arg_index].Substring(1);
-                    switch (option)
-                    {
-                        case "clang": arguments.Compiler.Value = ECompiler.Clang6_0; break;
-                        case "msvc": arguments.Compiler.Value = ECompiler.MSVC19; break;
-                        case "debug": arguments.DebugLevel.Value = EDebugLevel.Debug; break;
-                        case "ndebug": arguments.DebugLevel.Value = EDebugLevel.NonDebug; break;
-                        case "force": arguments.ForceCompilation = true; break;
-                        case "warnings_are_errors": arguments.WarningsAreErrors = true; break;
-                        case "output":
-                            ++arg_index;
-                            if (arg_index >= arg_count || IsFlag(Args[arg_index]))
-                                ErrorHandler("Output filename not specified in output filename option!");
-                            else
-                                arguments.OutputFilename.Value = Args[arg_index];
-                            break;
-                        default: ErrorHandler($"Unknown option \"{Args[arg_index]}\"!"); break;
-                    }
-                }
-                else
-                {
-                    if (File.Exists(Args[arg_index]))
-                        arguments.SourceFilenames.Add(Args[arg_index]);
-                    else
-                    {
-                        ErrorHandler($"Can not find the source file \"{Args[arg_index]}\"!");
-                    }
-                }
-            }
-            if (arguments.Compiler.WasCrashed) ErrorHandler("Compiler defined multiple times!");
-            if (arguments.DebugLevel.WasCrashed) ErrorHandler("Debug level defined multiple times!");
-            if (arguments.OutputFilename.WasCrashed) ErrorHandler("Output filepath defined multiple times!");
-            return (!error, arguments);
-        }
-
         bool AreArgumentValids(Arguments arguments)
         {
             bool error = false;
             if (!arguments.Compiler.HasValue) { error = true; Log.WriteLine("No compiler specified! Please use -clang or -msvc"); }
-            if (!arguments.OutputFilename.HasValue) { error = true; Log.WriteLine("No output filename specified! Please use -output <filepath>"); }
+            if (string.IsNullOrEmpty(arguments.OutputFilename)) { error = true; Log.WriteLine("No output filename specified! Please use -output <filepath>"); }
             if (arguments.SourceFilenames.Count == 0) { error = true; Log.WriteLine("No source filename specified! You must specify at least one source filename."); }
             return !error;
         }
 
+        private bool ParseArgumentsForCompiler(CommandLine _commandline, Arguments _args)
+        {
+            if (_commandline.IsPresent("clang"))
+            {
+                _args.Compiler.Value = ECompiler.Clang6_0;
+            }
+            if (_commandline.IsPresent("msvc"))
+            {
+                _args.Compiler.Value = ECompiler.MSVC19;
+            }
+            if (_commandline.TryGet("compiler", out string compiler_name))
+            {
+                switch (compiler_name)
+                {
+                    case "msvc": _args.Compiler.Value = ECompiler.MSVC19; break;
+                    case "clang": _args.Compiler.Value = ECompiler.Clang6_0; break;
+                    default: Log.WriteLine($@"Unknown compiler ""{compiler_name}""!"); return false;
+                }
+            }
+            if (_args.Compiler.WasCrashed)
+            {
+                Log.WriteLine("Compiler defined multiple times!");
+                return false;
+            }
+            return true;
+        }
+
+        private bool ParseArgumentsForOptimizationLevel(CommandLine _commandline, Arguments _args)
+        {
+            if (_commandline.IsPresent("debug"))
+            {
+                _args.DebugLevel.Value = EDebugLevel.Debug;
+            }
+            if (_commandline.IsPresent("ndebug"))
+            {
+                _args.DebugLevel.Value = EDebugLevel.NonDebug;
+            }
+            if (_commandline.TryGet("optimization", out string optimization_name))
+            {
+                switch (optimization_name)
+                {
+                    case "debug": _args.DebugLevel.Value = EDebugLevel.Debug; break;
+                    case "ndebug": _args.DebugLevel.Value = EDebugLevel.NonDebug; break;
+                    default: Log.WriteLine($@"Unknown optimization level ""{optimization_name}""!"); return false;
+                }
+            }
+            if (_args.DebugLevel.WasCrashed)
+            {
+                Log.WriteLine("Optimization level defined multiple times!");
+                return false;
+            }
+            return true;
+        }
+
+        private bool ParseArgumentsForWarningLevel(CommandLine _commandline, Arguments _args)
+        {
+            if (_commandline.TryGet("warning_level", out string warning_level_name))
+            {
+                if (Enum.TryParse(warning_level_name, true, out EWarningLevel wl))
+                {
+                    _args.WarningLevel = wl;
+                    return true;
+                }
+                else
+                {
+                    Log.WriteLine($@"Unknown warning level ""{warning_level_name}""!");
+                    return false;
+                }
+            }
+            // no warning_level is not an error
+            return true;
+        }
+
+        private void AssignDefaultValuesToUnsetOptionalArguments(Arguments _args)
+        {
+            if (!_args.Compiler.HasValue)
+            {
+                _args.Compiler.Value = ECompiler.Clang6_0;
+            }
+            if (!_args.WarningLevel.HasValue)
+            {
+                _args.WarningLevel = EWarningLevel.High;
+            }
+            if (!_args.StandardCpp.HasValue)
+            {
+                _args.StandardCpp = ECppVersion.Cpp17;
+            }
+        }
+
         internal int Run(string[] commandline_args)
         {
-            var blueprintManager = new BlueprintManager();
-            blueprintManager.Import("playground.blueprint.json");
-            blueprintManager.DumpProjectNames();
-
-            string touched_filename = "tdd/simple_tests.hpp"; // @"wit\nonintegral_enum.hpp"; // 
-            Log.WriteLine($@"Modification of ""{ touched_filename }"" will induce the compilation of following projects:");
-            var project_to_compile = blueprintManager.Touch(touched_filename);
-            foreach (var pj in blueprintManager.Touch(touched_filename))
-            {
-                Log.WriteLine($@"- ""{ pj.Name }""");
-            }
-
             var commandLine = new CommandLine();
-            commandLine.RegisterFlag("clang", CommandLine.NeedValue.NoValue);
-            commandLine.RegisterFlag("msvc", CommandLine.NeedValue.NoValue);
+            commandLine.RegisterFlag("clang", CommandLine.NeedValue.NoValue); // obsolete
+            commandLine.RegisterFlag("msvc", CommandLine.NeedValue.NoValue); // obsolete
             commandLine.RegisterFlag("debug", CommandLine.NeedValue.NoValue);
             commandLine.RegisterFlag("ndebug", CommandLine.NeedValue.NoValue);
             commandLine.RegisterFlag("force", CommandLine.NeedValue.NoValue);
@@ -107,14 +132,73 @@ namespace BuildTask
             commandLine.RegisterFlag("warning_level", CommandLine.NeedValue.OneValue);
             commandLine.RegisterFlag("blueprint", CommandLine.NeedValue.OneValue);
 
-            commandLine.Parse(new string[] { "source.cpp", "-fofo", "source.h", "-compiler:msvc", "-force:no" });
+            commandLine.Parse(commandline_args);
 
-            var (arg_ok, args) = ParseArguments(commandline_args);
+            Arguments args = new Arguments();
+            bool arg_ok = true;
+            arg_ok &= ParseArgumentsForCompiler(commandLine, args);
+            arg_ok &= ParseArgumentsForOptimizationLevel(commandLine, args);
+            arg_ok &= ParseArgumentsForWarningLevel(commandLine, args);
+
+            // warning as error
+            args.WarningsAreErrors = commandLine.IsPresent("warnings_are_errors");
+
+            // force compilation
+            args.ForceCompilation = commandLine.IsPresent("force");
+
+            // output
+            if (commandLine.TryGet("output", out string output_filename))
+            {
+                args.OutputFilename = output_filename;
+            }
+            else
+            {
+                Log.WriteLine("Output file not defined!");
+                arg_ok = false;
+            }
+
+            var missing_files = commandLine.Files.Where(s => !File.Exists(s)).ToArray();
+            if (missing_files.Length==0)
+            {
+                args.SourceFilenames = commandLine.Files.ToList();
+            }
+            else
+            {
+                Log.WriteLine($"Missing source files: { string.Join(", ", missing_files.Select(s => $@"""{s}""")) }.");
+                arg_ok = false;
+            }
+
             arg_ok &= AreArgumentValids(args);
             if (!arg_ok)
             {
                 Log.WriteLine("Bad arguments!");
                 return 1;
+            }
+
+            AssignDefaultValuesToUnsetOptionalArguments(args);
+
+            if (commandLine.TryGet("blueprint", out string blueprint_filename))
+            {
+                var blueprintManager = new BlueprintManager();
+                blueprintManager.Import(blueprint_filename);
+
+                Log.WriteLine($@"Modification of ""{ string.Join(", ", commandLine.Files) }"" will induce the compilation of following projects:");
+                var project_to_compile = blueprintManager.Touch(commandLine.Files);
+
+                Dictionary<string, string> variables = new Dictionary<string, string>
+                {
+                    { "compiler_name", CompilerFactory.GetShortName(args.Compiler.Value) },
+                    { "optimization", args.DebugLevel.Value==EDebugLevel.Debug ? "d" : "r" },
+                    { "target", "win64" }
+                };
+                foreach (var pj in project_to_compile)
+                {
+                    Log.WriteLine($@"Project ""{ pj.Name }"" blueprint:");
+                    Log.PushIndent();
+                    Log.WriteLine($@"- OutputFile: ""{ pj.ResolveOutput(variables) }"", { (string.IsNullOrEmpty(args.OutputFilename) ? "" : $@"(overidden by ""{ args.OutputFilename }"")") }");
+                    Log.WriteLine($@"- SourcesFile: { string.Join(", ", pj.Sources.Select(s => $@"""{s}""")) }");
+                    Log.PopIndent();
+                }
             }
 
             // header only => try to compile associated tests source file
@@ -148,7 +232,7 @@ namespace BuildTask
 
             if (!args.ForceCompilation)
             {
-                var outputFileInfo = new FileInfo(args.OutputFilename.Value);
+                var outputFileInfo = new FileInfo(args.OutputFilename);
                 if (outputFileInfo.Exists)
                 {
                     Log.WriteLine($"Output file time: {outputFileInfo.LastWriteTime}");
@@ -160,13 +244,13 @@ namespace BuildTask
                 }
             }
 
-            var compilo = CompilerFactory.Create(args.Compiler.GetValueOrDefault(ECompiler.Clang6_0));
+            var compilo = CompilerFactory.Create(args.Compiler.Value);
 
             compilo.IntermediaryFileFolderName = "obj";
-            compilo.CppVersion = ECppVersion.Cpp17;
-            compilo.WarningLevel = EWarningLevel.High;
+            compilo.CppVersion = args.StandardCpp;
+            compilo.WarningLevel = args.WarningLevel;
             compilo.DebugLevel = args.DebugLevel.Value;
-            compilo.OutputFilepath = args.OutputFilename.Value;
+            compilo.OutputFilepath = args.OutputFilename;
             compilo.WarningAsErrors = args.WarningsAreErrors;
             compilo.SourceFilePaths = args.SourceFilenames;
             var exitCode = compilo.Run();

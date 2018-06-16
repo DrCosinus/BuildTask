@@ -399,8 +399,8 @@ namespace BuildTask.Compilers
             {
                 case EWarningLevel.None: parameters.Add("/W0"); break;
                 case EWarningLevel.Low: parameters.Add("/W1"); break;
-                case EWarningLevel.MediumLow: parameters.Add("/W2"); break;
-                case EWarningLevel.MediumHigh: parameters.Add("/W3"); break;
+                case EWarningLevel.Few: parameters.Add("/W2"); break;
+                case EWarningLevel.Medium: parameters.Add("/W3"); break;
                 case EWarningLevel.High: parameters.Add("/W4"); break;
                 case EWarningLevel.Max: parameters.Add("/Wall"); break;
                 default: goto case EWarningLevel.Low;

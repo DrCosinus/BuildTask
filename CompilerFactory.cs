@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BuildTask
+﻿namespace BuildTask
 {
-    class CompilerFactory
+    static class CompilerFactory
     {
         public static ICompiler Create(ECompiler compiler)
         {
@@ -14,6 +8,14 @@ namespace BuildTask
             {
                 case ECompiler.Clang6_0: return new Compilers.Clang();
                 default: return new Compilers.MSVC();
+            }
+        }
+        public static string GetShortName(ECompiler compiler)
+        {
+            switch (compiler)
+            {
+                case ECompiler.Clang6_0: return "clang";
+                default: return "msvc";
             }
         }
     }

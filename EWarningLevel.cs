@@ -10,8 +10,8 @@ namespace BuildTask
     {
         None,
         Low,
-        MediumLow,
-        MediumHigh,
+        Few,
+        Medium,
         High,
         Max
     }

@@ -33,8 +33,9 @@ namespace BuildTask
         Regex regexDefinition = new Regex( "^[-/]" + wordRegEx(keyGroupName) + "(?:[:=]" + wordRegEx(valueGroupName) + ")?$", RegexOptions.Compiled | RegexOptions.Singleline);
         Regex regexAnyValue = new Regex("^[^-/].+$", RegexOptions.Compiled | RegexOptions.Singleline);
         Regex regexNotADefinition = new Regex("^[^-/:=][^:=]*$", RegexOptions.Compiled | RegexOptions.Singleline);
-        Dictionary<string, string> definitions_ = new Dictionary<string, string>();
-        List<string> files_ = new List<string>();
+
+        Dictionary<string, string> definitions_ = new Dictionary<string, string>(); // TO DO: support multiple values for a flag
+        public IEnumerable<string> Files { get; private set; } = null;
         List<FlagDefinition> flags_ = new List<FlagDefinition>();
 
         internal void RegisterFlag(string _flagName, NeedValue _flagNeedValue = NeedValue.NoValue)
@@ -47,7 +48,15 @@ namespace BuildTask
             flags_.Add(new FlagDefinition { name = _flagName, needValue = _flagNeedValue });
         }
 
-
+        private bool Define(string _flag, string _value)
+        {
+            if (definitions_.ContainsKey(_flag))
+            {
+                Log.WriteLine($@"Commandline flag ""{ _flag }"" already defined");
+            }
+            definitions_.Add(_flag, _value);
+            return true;
+        }
 
         // [-\/](?<key>[^ :=]+)(?:[ :=](?<value>[^ ]+))?(?:\s|$)
         // [-\/](?:(?<key>fofo|compiler|force)(?:[ :=](?<value>[^-](?:(?!\s|$).)*)))|(?<key0>fuck)
@@ -61,66 +70,42 @@ namespace BuildTask
             var OneValueRegex = new Regex($@"[/-](?<{ keyGroupName }>{ OneValueFlags })[ :=](?<{ valueGroupName }>(?:((?!\s|$).)+))(?:\s|$)"); // todo: manage double quotes
             var noval = NoValueRegex.Matches(all_args);
             var oneval = OneValueRegex.Matches(all_args);
-            noval.Enumerate();
-            //string pending_definition = null;
-            foreach (var commandline_arg in commandline_args)
+            foreach (var m in noval.Enumerate())
             {
-                //if (pending_definition!=null)
-                //{
-                //    var match = regexAnyValue.Match(commandline_arg);
-                //    if (match.Success)
-                //    {
-                //        definitions_[pending_definition] = commandline_arg;
-                //        pending_definition = null;
-                //    }
-                //    else
-                //    {
-                //        Log.WriteLine("Command line argument error: \"{ pending_definition }\" = \"{ commandline_arg }\"");
-                //        pending_definition = null;
-                //        continue;
-                //    }
-                //}
-                var definition_match = regexDefinition.Match(commandline_arg);
-                if (definition_match.Success)
-                {
-                    var k = definition_match.Groups[keyGroupName].Value;
-                    var v = definition_match.Groups[valueGroupName].Value;
-                    var flags = flags_.Where(f => f.name == k);
-                    if (flags.Count()!=0)
-                    {
-                        var flag = flags.First();
-                        if (flag.needValue == NeedValue.OneValue)
-                        {
-                            definitions_[definition_match.Groups[keyGroupName].Value] = v;
-                        }
-                        else
-                        {
-                            Log.WriteLine($"Flag: \"{ k }\" in command line argument should not have value\"{ commandline_arg }\"");
-                        }
-                    }
-                    else
-                    {
-                        Log.WriteLine($"Unregistered flag: \"{ k }\" in command line argument \"{ commandline_arg }\"");
-                    }
-                }
-                else
-                {
-                    var file_match = regexNotADefinition.Match(commandline_arg);
-                    if (file_match.Success)
-                    {
-                        files_.Add(commandline_arg);
-                    }
-                    else
-                    {
-                        Log.WriteLine($"Command line argument error: \"{ commandline_arg }\"");
-                        continue;
-                    }
-                }
+                definitions_.Add(m.Groups[keyGroupName].Value, "");
+            }
+
+            foreach (var m in oneval.Enumerate())
+            {
+                definitions_.Add(m.Groups[keyGroupName].Value, m.Groups[valueGroupName].Value);
+            }
+
+            Files = OneValueRegex.Replace(NoValueRegex.Replace(all_args, ""), "").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        public bool IsPresent(string _flag)
+        {
+            return definitions_.Count(kv => kv.Key==_flag) > 0;
+        }
+
+        public bool TryGet(string _flag, out string _value)
+        {
+            return definitions_.TryGetValue(_flag, out _value);
+        }
+
+        public bool TryGet(string _flag, out int _value)
+        {
+            string str;
+            if (definitions_.TryGetValue(_flag, out str))
+            {
+                return int.TryParse(str, out _value);
+            }
+            else
+            {
+                _value = default(int);
+                return false;
             }
         }
-        bool IsPresent(string anArgument)
-        {
-            return false;
-        }
+
     }
 }
