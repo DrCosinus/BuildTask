@@ -76,6 +76,7 @@
     <Compile Include="ECppVersion.cs" />
     <Compile Include="EDebugLevel.cs" />
     <Compile Include="EWarningLevel.cs" />
+    <Compile Include="FileUtility.cs" />
     <Compile Include="ICompiler.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
