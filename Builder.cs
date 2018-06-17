@@ -254,14 +254,17 @@ namespace BuildTask
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
 
-                    //var additionalIncludePath = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => pj.FullPath);
+                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullPath, pj.FullPath)).ToList();
                     if (project.FullPath != baseIncludePath)
                     {
                         string rel = FileUtility.MakeRelative(project.FullPath, baseIncludePath);
-                        compilo.AdditionalIncludePaths = new List<string> { rel };
+                        additionalIncludePaths.Add( rel );
                         //Log.WriteLine($@"AdditionalIncludePath: ""{rel}""");
                     }
+                    compilo.AdditionalIncludePaths = additionalIncludePaths;
+
                     exitCode = compilo.Run();
+
                     if (exitCode != 0)
                     {
                         Log.WriteLine($@"ERROR: Project ""{project.Name}"" compilation failed!");

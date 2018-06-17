@@ -67,7 +67,10 @@ namespace BuildTask
                         {
                             // Log.PushIndent();
                             if (!Import(import))
+                            {
+                                Log.WriteLine($@"ERROR: Something got wrong during the import of the blueprint ""{_path}""");
                                 return false;
+                            }
                             // Log.PopIndent();
                         }
                     }
