@@ -30,6 +30,11 @@ namespace BuildTask
             return null;
         }
 
+        public Project GetProjectByFullpath(string _fullpath)
+        {
+            return projects.Select(kv => kv.Value).FirstOrDefault(pj => string.Compare(pj.FullFilePath, _fullpath, true) == 0);
+        }
+
         internal bool Import(string _path)
         {
             var fullpath = Path.GetFullPath(_path);
@@ -43,22 +48,21 @@ namespace BuildTask
                 }
             }
             // Fix slashes and turn to lower case
-            fullpath = fullpath.ToLower();
+            var lowercase_fullpath = fullpath.ToLower();
 
-            if (importedBlueprintFullPaths.Contains(fullpath))
+            if (importedBlueprintFullPaths.Contains(lowercase_fullpath))
             {
                 // Log.WriteLine($@"Skip import of ""{ _path }"" (already imported).");
                 return true;
             }
-            importedBlueprintFullPaths.Add(fullpath);
+            importedBlueprintFullPaths.Add(lowercase_fullpath);
 
             // Log.WriteLine($"Importing { fullpath }...");
             string cwd = Path.GetDirectoryName(fullpath);
+            var filename = Path.GetFileName(_path);
             using (new ScopedWorkingDirectory(cwd))
             {
-                _path = Path.GetFileName(_path);
-
-                var blueprint = ReadBlueprint(_path);
+                var blueprint = ReadBlueprint(filename);
                 if (blueprint != null)
                 {
                     if (blueprint.Import != null)
@@ -68,7 +72,7 @@ namespace BuildTask
                             // Log.PushIndent();
                             if (!Import(import))
                             {
-                                Log.WriteLine($@"ERROR: Something got wrong during the import of the blueprint ""{_path}""");
+                                Log.WriteLine($@"ERROR: Something got wrong during the import of the blueprint ""{filename}""");
                                 return false;
                             }
                             // Log.PopIndent();
@@ -82,7 +86,8 @@ namespace BuildTask
                             // Log.WriteLine($@"Found project ""{ blueprint.Project.Name }"" key.");
                             if (projects.Count(pair => pair.Key == blueprint.Project.Name) == 0)
                             {
-                                blueprint.Project.FullPath = cwd;
+                                blueprint.Project.FullFolderPath = cwd;
+                                blueprint.Project.FullFilePath = fullpath;
                                 projects.Add(blueprint.Project.Name, blueprint.Project);
                             }
                             else
@@ -132,7 +137,8 @@ namespace BuildTask
 
         internal class Project
         {
-            public string FullPath;
+            public string FullFolderPath;
+            public string FullFilePath;
             public string Name;
             public List<string> Dependencies = null;
             public List<string> Sources = null;
@@ -164,13 +170,13 @@ namespace BuildTask
 
             foreach (var path in paths)
             {
-                var fullpath = Path.GetFullPath(path).ToLower();
+                var fullpath = Path.GetFullPath(path);
                 // the projects which include this file
                 var new_projects_to_build = projs.Where(proj =>
                 {
                     return
-                        ((proj.Sources?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0)
-                        || ((proj.Headers?.Count(filename => Path.Combine(proj.FullPath, filename) == fullpath)).GetValueOrDefault(0) != 0);
+                        ((proj.Sources?.Count(filename => Path.Combine(proj.FullFolderPath, filename) == fullpath)).GetValueOrDefault(0) != 0)
+                        || ((proj.Headers?.Count(filename => Path.Combine(proj.FullFolderPath, filename) == fullpath)).GetValueOrDefault(0) != 0);
                 }).ToList();
                 if (new_projects_to_build.Count != 0)
                 {

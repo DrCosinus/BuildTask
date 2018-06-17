@@ -155,8 +155,16 @@ namespace BuildTask
             {
                 if (blueprintManager.Import(blueprint_filename))
                 {
-                    project_to_compile = blueprintManager.Touch(commandLine.Files);
-
+                    if (commandLine.Files.Count() == 1 && commandLine.Files.First().EndsWith(".blueprint.json"))
+                    {
+                        var project = blueprintManager.GetProjectByFullpath(Path.GetFullPath(commandLine.Files.First()));
+                        if (project != null)
+                            project_to_compile = new List<BlueprintManager.Project> { project };
+                    }
+                    else
+                    {
+                        project_to_compile = blueprintManager.Touch(commandLine.Files);
+                    }
                     if (project_to_compile.Count() == 0)
                     {
                         if (override_outputFilename != null)
@@ -167,7 +175,8 @@ namespace BuildTask
                                 {
                                     Name = "(No Project)",
                                     Sources = commandLine.Files.ToList(),
-                                    FullPath = Directory.GetCurrentDirectory(),
+                                    FullFolderPath = Directory.GetCurrentDirectory(),
+                                    Dependencies = new List<string>()
                                 }
                             };
                         }
@@ -222,10 +231,10 @@ namespace BuildTask
             {
                 Log.WriteLine($@"Project ""{project.Name}"":");
 
-                using (new ScopedWorkingDirectory(project.FullPath))
+                using (new ScopedWorkingDirectory(project.FullFolderPath))
                 using (new ScopedLogIndent())
                 {
-                    string outputFilename = override_outputFilename!=null ? FileUtility.MakeRelative(project.FullPath, override_outputFilename)  : project.ResolveOutput(variables);
+                    string outputFilename = override_outputFilename!=null ? FileUtility.MakeRelative(project.FullFolderPath, override_outputFilename)  : project.ResolveOutput(variables);
                     var sourceFilenames = project.Sources;
 
                     //if (!args.ForceCompilation)
@@ -254,10 +263,10 @@ namespace BuildTask
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
 
-                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullPath, pj.FullPath)).ToList();
-                    if (project.FullPath != baseIncludePath)
+                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
+                    if (project.FullFolderPath != baseIncludePath)
                     {
-                        string rel = FileUtility.MakeRelative(project.FullPath, baseIncludePath);
+                        string rel = FileUtility.MakeRelative(project.FullFolderPath, baseIncludePath);
                         additionalIncludePaths.Add( rel );
                         //Log.WriteLine($@"AdditionalIncludePath: ""{rel}""");
                     }
