@@ -12,6 +12,8 @@ namespace BuildTask.Compilers
 {
     class MSVC : AbstractCompiler
     {
+        public override string ShortName => "msvc";
+
         // https://docs.microsoft.com/en-us/visualstudio/extensibility/breaking-changes-2017
         // https://stackoverflow.com/questions/42916299/access-visual-studio-2017s-private-registry-hive
         // https://stackoverflow.com/questions/2917309/regloadappkey-working-fine-on-32-bit-os-failing-on-64-bit-os-even-if-both-proc
@@ -270,7 +272,6 @@ namespace BuildTask.Compilers
             Print("Properties:", instance2.GetProperties());
             Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
 */
-            Log.WriteLine();
         }
 
         private static void Print(RegistryKey key)

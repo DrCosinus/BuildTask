@@ -24,8 +24,6 @@ namespace BuildTask
         {
             bool error = false;
             if (!arguments.Compiler.HasValue) { error = true; Log.WriteLine("No compiler specified! Please use -clang or -msvc"); }
-            if (string.IsNullOrEmpty(arguments.OutputFilename)) { error = true; Log.WriteLine("No output filename specified! Please use -output <filepath>"); }
-            if (arguments.SourceFilenames.Count == 0) { error = true; Log.WriteLine("No source filename specified! You must specify at least one source filename."); }
             return !error;
         }
 
@@ -149,99 +147,51 @@ namespace BuildTask
             // output
             if (commandLine.TryGet("output", out string output_filename))
             {
-                args.OutputFilename = output_filename;
+                Log.WriteLine(@"WARNING: Obsolete ""-output"" flag ignored!");
             }
-            else
+
+            if (commandLine.Files.Count() == 0)
             {
-                Log.WriteLine("Output file not defined!");
+                arg_ok = true;
+                Log.WriteLine("ERROR: No source filename specified! You must specify at least one source filename.");
+            }
+            var missing_files = commandLine.Files.Where(s => !File.Exists(s)).ToArray();
+            if (missing_files.Length!=0)
+            {
+                Log.WriteLine($"ERROR: Missing source files: { string.Join(", ", missing_files.Select(s => $@"""{s}""")) }.");
                 arg_ok = false;
             }
 
-            var missing_files = commandLine.Files.Where(s => !File.Exists(s)).ToArray();
-            if (missing_files.Length==0)
+            AssignDefaultValuesToUnsetOptionalArguments(args);
+
+            IEnumerable<BlueprintManager.Project> project_to_compile = null;
+            if (commandLine.TryGet("blueprint", out string blueprint_filename))
             {
-                args.SourceFilenames = commandLine.Files.ToList();
+                var blueprintManager = new BlueprintManager();
+                blueprintManager.Import(blueprint_filename);
+
+                project_to_compile = blueprintManager.Touch(commandLine.Files);
+
+                if (project_to_compile.Count()==0)
+                {
+                    if (commandLine.Files.Count() > 1)
+                        Log.WriteLine($@"ERROR: No file among { string.Join( ", ", commandLine.Files.Select( f => $@"""{f}""")) } belongs to a blueprint!");
+                    else
+                        Log.WriteLine($@"ERROR: File ""{ commandLine.Files.First() }"" does not belong to a blueprint!");
+                    arg_ok = false;
+                }
             }
             else
             {
-                Log.WriteLine($"Missing source files: { string.Join(", ", missing_files.Select(s => $@"""{s}""")) }.");
+                Log.WriteLine("ERROR: No blueprint specified! (not supported yet)");
                 arg_ok = false;
             }
 
             arg_ok &= AreArgumentValids(args);
             if (!arg_ok)
             {
-                Log.WriteLine("Bad arguments!");
+                Log.WriteLine("ERROR: Bad arguments!");
                 return 1;
-            }
-
-            AssignDefaultValuesToUnsetOptionalArguments(args);
-
-            if (commandLine.TryGet("blueprint", out string blueprint_filename))
-            {
-                var blueprintManager = new BlueprintManager();
-                blueprintManager.Import(blueprint_filename);
-
-                Log.WriteLine($@"Modification of ""{ string.Join(", ", commandLine.Files) }"" will induce the compilation of following projects:");
-                var project_to_compile = blueprintManager.Touch(commandLine.Files);
-
-                Dictionary<string, string> variables = new Dictionary<string, string>
-                {
-                    { "compiler_name", CompilerFactory.GetShortName(args.Compiler.Value) },
-                    { "optimization", args.DebugLevel.Value==EDebugLevel.Debug ? "d" : "r" },
-                    { "target", "win64" }
-                };
-                foreach (var pj in project_to_compile)
-                {
-                    Log.WriteLine($@"Project ""{ pj.Name }"" blueprint:");
-                    Log.PushIndent();
-                    Log.WriteLine($@"- OutputFile: ""{ pj.ResolveOutput(variables) }"", { (string.IsNullOrEmpty(args.OutputFilename) ? "" : $@"(overidden by ""{ args.OutputFilename }"")") }");
-                    Log.WriteLine($@"- SourcesFile: { string.Join(", ", pj.Sources.Select(s => $@"""{s}""")) }");
-                    Log.PopIndent();
-                }
-            }
-
-            // header only => try to compile associated tests source file
-            if (args.SourceFilenames.Count == 1 && args.SourceFilenames[0].EndsWith(".h"))
-            {
-                args.SourceFilenames[0] = args.SourceFilenames[0].Replace(".h", "_tests.cpp");
-            }
-
-            var most_recent_source_file_time = DateTime.MinValue;
-            bool error = false;
-            foreach (var filename in args.SourceFilenames)
-            {
-                var sourceFileInfo = new FileInfo(filename);
-                if (sourceFileInfo.Exists)
-                {
-                    if (most_recent_source_file_time < sourceFileInfo.LastWriteTime)
-                        most_recent_source_file_time = sourceFileInfo.LastWriteTime;
-                }
-                else
-                {
-                    Log.WriteLine($"Fail to find the source file \"{filename}\"!");
-                    error = true;
-                }
-            }
-            if (error)
-            {
-                Log.WriteLine("Bad source files!");
-                return 1;
-            }
-            Log.WriteLine($"Most recent source file time: {most_recent_source_file_time}");
-
-            if (!args.ForceCompilation)
-            {
-                var outputFileInfo = new FileInfo(args.OutputFilename);
-                if (outputFileInfo.Exists)
-                {
-                    Log.WriteLine($"Output file time: {outputFileInfo.LastWriteTime}");
-                    if (outputFileInfo.LastWriteTime > most_recent_source_file_time)
-                    {
-                        Log.WriteLine("No update needed.");
-                        return 0;
-                    }
-                }
             }
 
             var compilo = CompilerFactory.Create(args.Compiler.Value);
@@ -250,13 +200,90 @@ namespace BuildTask
             compilo.CppVersion = args.StandardCpp;
             compilo.WarningLevel = args.WarningLevel;
             compilo.DebugLevel = args.DebugLevel.Value;
-            compilo.OutputFilepath = args.OutputFilename;
             compilo.WarningAsErrors = args.WarningsAreErrors;
-            compilo.SourceFilePaths = args.SourceFilenames;
-            var exitCode = compilo.Run();
 
+            Dictionary<string, string> variables = new Dictionary<string, string>
+            {
+                { "compiler_name", compilo.ShortName },
+                { "optimization", args.DebugLevel.Value==EDebugLevel.Debug ? "d" : "r" },
+                { "target", "win64" }
+            };
+
+            int exitCode = 0;
+
+            foreach (var project in project_to_compile)
+            {
+                Log.WriteLine($@"Project ""{project.Name}"":");
+
+                using (new ScopedWorkingDirectory(project.FullPath))
+                using (new ScopedLogIndent())
+                {
+                    string outputFilename = project.ResolveOutput(variables);
+                    var sourceFilenames = project.Sources;
+
+                    //if (!args.ForceCompilation)
+                    //{
+                    //    // TODO: should also check the blueprint file date and the dates of the files this project depends on
+                    //    if (File.Exists(outputFilename))
+                    //    {
+                    //        var outputFileDate = File.GetLastWriteTime(outputFilename);
+                    //        var mostRecentSourceFileDate = sourceFilenames.Select(sf => File.GetLastWriteTime(sf)).Min();
+                    //        if (outputFileDate > mostRecentSourceFileDate)
+                    //        {
+                    //            Log.WriteLine("No changes detected. Compilation skipped.");
+                    //            continue;
+                    //        }
+                    //        Log.WriteLine($@"output file ""{ outputFilename }"" is old. Compilation needed.");
+                    //    }
+                    //    else
+                    //    {
+                    //        Log.WriteLine($@"output file ""{ outputFilename }"" does not exit yet. Compilation needed.");
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    Log.WriteLine("Forced compilation.");
+                    //}
+                    compilo.OutputFilepath = outputFilename;
+                    compilo.SourceFilePaths = sourceFilenames;
+
+                    exitCode = compilo.Run();
+                    if (exitCode != 0)
+                    {
+                        Log.WriteLine($@"ERROR: Project ""{project.Name}"" compilation failed!");
+                        break;
+                    }
+                }
+            }
+            Log.WriteLine("Build task completed.");
             return exitCode;
         }
-    }
 
+        class ScopedWorkingDirectory : IDisposable
+        {
+            private string storedWorkingFolder;
+            public ScopedWorkingDirectory(string _newWorkingDirectory)
+            {
+                storedWorkingFolder = Directory.GetCurrentDirectory();
+                Directory.SetCurrentDirectory(_newWorkingDirectory);
+            }
+            public void Dispose()
+            {
+                Directory.SetCurrentDirectory(storedWorkingFolder);
+            }
+        }
+
+        class ScopedLogIndent : IDisposable
+        {
+            public ScopedLogIndent()
+            {
+                Log.PushIndent();
+            }
+
+            public void Dispose()
+            {
+                Log.PopIndent();
+            }
+        }
+    }
 }

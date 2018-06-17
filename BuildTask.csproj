@@ -65,7 +65,6 @@
     <Compile Include="AbstractCompiler.cs" />
     <Compile Include="Arguments.cs" />
     <Compile Include="BlueprintManager.cs" />
-    <Compile Include="BuildConfig.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CommandLine.cs" />

@@ -8,6 +8,8 @@ namespace BuildTask.Compilers
 {
     class Clang : AbstractCompiler
     {
+        public override string ShortName => "clang";
+
         protected override string ExecutableName => "clang";
         private string GenerateCompilationParametersString()
         {

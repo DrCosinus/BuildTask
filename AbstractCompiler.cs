@@ -10,6 +10,7 @@ namespace BuildTask
 {
     abstract class AbstractCompiler : ICompiler
     {
+        public abstract string ShortName { get; }
         protected virtual void SetupEnvironmentVariables() { }
         protected abstract string ExecutableName { get; }
         public ECppVersion? CppVersion { protected get; set; }

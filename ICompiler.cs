@@ -15,6 +15,7 @@ namespace BuildTask
         List<string> SourceFilePaths { set; }
         string OutputFilepath { set; }
         string IntermediaryFileFolderName { set; }
+        string ShortName { get; }
 
         int Run();
     }

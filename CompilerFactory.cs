@@ -10,13 +10,5 @@
                 default: return new Compilers.MSVC();
             }
         }
-        public static string GetShortName(ECompiler compiler)
-        {
-            switch (compiler)
-            {
-                case ECompiler.Clang6_0: return "clang";
-                default: return "msvc";
-            }
-        }
     }
 }

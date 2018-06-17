@@ -80,7 +80,7 @@ namespace BuildTask
                 definitions_.Add(m.Groups[keyGroupName].Value, m.Groups[valueGroupName].Value);
             }
 
-            Files = OneValueRegex.Replace(NoValueRegex.Replace(all_args, ""), "").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            Files = OneValueRegex.Replace(NoValueRegex.Replace(all_args, ""), "").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Where(s => s[0]!='-' && s[0]!='/');
         }
 
         public bool IsPresent(string _flag)

@@ -118,7 +118,7 @@ namespace BuildTask
                 return $@"Project""{ Name }""";
             }
 
-            internal object ResolveOutput(Dictionary<string, string> _variables)
+            internal string ResolveOutput(Dictionary<string, string> _variables)
             {
                 string result = Output.ReplaceVariable("project_name", Name);
                 foreach (var kv in _variables)
