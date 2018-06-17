@@ -35,7 +35,7 @@ namespace BuildTask
             int n = Math.Min(ref_splits.Count(), path_splits.Count());
             for (int i = 0; i < n; ++i)
             {
-                if (ref_splits[i] != path_splits[i])
+                if (string.Compare(ref_splits[i], path_splits[i], true)!=0)
                     break;
                 ++count;
             }

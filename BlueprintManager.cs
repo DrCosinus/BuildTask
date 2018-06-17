@@ -14,9 +14,11 @@ namespace BuildTask
 
         List<string> importedBlueprintFullPaths = new List<string>();
         Dictionary<string, Project> projects = new Dictionary<string, Project>();
+        readonly string baseDirectory;
 
         public BlueprintManager()
         {
+            baseDirectory = Directory.GetCurrentDirectory();
         }
 
         public Project GetProject(string _projectName)
@@ -30,7 +32,19 @@ namespace BuildTask
 
         internal void Import(string _path)
         {
-            var fullpath = Path.GetFullPath(_path).ToLower();
+            var fullpath = Path.GetFullPath(_path);
+            if (!File.Exists(fullpath))
+            {
+                fullpath = Path.GetFullPath(Path.Combine(baseDirectory, _path));
+                if (!File.Exists(fullpath))
+                {
+                    Log.WriteLine($@"ERROR: Can not find blueprint ""{_path}""");
+                    return;
+                }
+            }
+            // Fix slashes and turn to lower case
+            fullpath = fullpath.ToLower();
+
             if (importedBlueprintFullPaths.Contains(fullpath))
             {
                 // Log.WriteLine($@"Skip import of ""{ _path }"" (already imported).");
@@ -38,9 +52,9 @@ namespace BuildTask
             }
             importedBlueprintFullPaths.Add(fullpath);
 
-            // Log.WriteLine($"Importing { _path }...");
+            // Log.WriteLine($"Importing { fullpath }...");
             string stored_cwd = Directory.GetCurrentDirectory();
-            string cwd = Path.GetDirectoryName(Path.GetFullPath(_path));
+            string cwd = Path.GetDirectoryName(fullpath);
             Directory.SetCurrentDirectory(cwd);
             _path = Path.GetFileName(_path);
 
@@ -146,7 +160,7 @@ namespace BuildTask
 
             foreach (var path in paths)
             {
-                var fullpath = Path.GetFullPath(path);
+                var fullpath = Path.GetFullPath(path).ToLower();
                 // the projects which include this file
                 var new_projects_to_build = projs.Where(proj =>
                 {
