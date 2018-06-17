@@ -56,4 +56,19 @@ namespace BuildTask
         //Assert.AreEqual(FileUtility.MakeRelative("", "A/B/C"), @"A\B\C");
         //Assert.AreEqual(FileUtility.MakeRelative("A/B/C", ""), @"..\..\..");
     }
+
+    public class ScopedWorkingDirectory : IDisposable
+    {
+        private string storedWorkingFolder;
+        public ScopedWorkingDirectory(string _newWorkingDirectory)
+        {
+            storedWorkingFolder = Directory.GetCurrentDirectory();
+            Directory.SetCurrentDirectory(_newWorkingDirectory);
+        }
+        public void Dispose()
+        {
+            Directory.SetCurrentDirectory(storedWorkingFolder);
+        }
+    }
+
 }

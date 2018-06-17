@@ -133,7 +133,7 @@ namespace BuildTask
             if (commandLine.TryGet("output", out override_outputFilename))
             {
                 override_outputFilename = Path.GetFullPath(override_outputFilename); // override is relative to workspace folder
-                Log.WriteLine($@"Override blueprint output filename by ""{ override_outputFilename }"".");
+                //Log.WriteLine($@"Override blueprint output filename by ""{ override_outputFilename }"".");
             }
 
             if (commandLine.Files.Count() == 0)
@@ -153,16 +153,22 @@ namespace BuildTask
             IEnumerable<BlueprintManager.Project> project_to_compile = null;
             if (commandLine.TryGet("blueprint", out string blueprint_filename))
             {
-                blueprintManager.Import(blueprint_filename);
-
-                project_to_compile = blueprintManager.Touch(commandLine.Files);
-
-                if (project_to_compile.Count()==0)
+                if (blueprintManager.Import(blueprint_filename))
                 {
-                    if (commandLine.Files.Count() > 1)
-                        Log.WriteLine($@"ERROR: No file among { string.Join( ", ", commandLine.Files.Select( f => $@"""{f}""")) } belongs to a blueprint!");
-                    else
-                        Log.WriteLine($@"ERROR: File ""{ commandLine.Files.First() }"" does not belong to a blueprint!");
+                    project_to_compile = blueprintManager.Touch(commandLine.Files);
+
+                    if (project_to_compile.Count() == 0)
+                    {
+                        if (commandLine.Files.Count() > 1)
+                            Log.WriteLine($@"ERROR: No file among { string.Join(", ", commandLine.Files.Select(f => $@"""{f}""")) } belongs to a blueprint!");
+                        else
+                            Log.WriteLine($@"ERROR: File ""{ commandLine.Files.First() }"" does not belong to a blueprint!");
+                        arg_ok = false;
+                    }
+                }
+                else
+                {
+                    Log.WriteLine("ERROR: An error occured while reading blueprints!");
                     arg_ok = false;
                 }
             }
@@ -175,7 +181,7 @@ namespace BuildTask
             arg_ok &= AreArgumentValids(args);
             if (!arg_ok)
             {
-                Log.WriteLine("ERROR: Bad arguments!");
+                Log.WriteLine("ERROR: Something went wrong!");
                 return 1;
             }
 
@@ -250,20 +256,6 @@ namespace BuildTask
             }
             Log.WriteLine("Build task completed.");
             return exitCode;
-        }
-
-        class ScopedWorkingDirectory : IDisposable
-        {
-            private string storedWorkingFolder;
-            public ScopedWorkingDirectory(string _newWorkingDirectory)
-            {
-                storedWorkingFolder = Directory.GetCurrentDirectory();
-                Directory.SetCurrentDirectory(_newWorkingDirectory);
-            }
-            public void Dispose()
-            {
-                Directory.SetCurrentDirectory(storedWorkingFolder);
-            }
         }
 
         class ScopedLogIndent : IDisposable

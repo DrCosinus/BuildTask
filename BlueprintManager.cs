@@ -30,7 +30,7 @@ namespace BuildTask
             return null;
         }
 
-        internal void Import(string _path)
+        internal bool Import(string _path)
         {
             var fullpath = Path.GetFullPath(_path);
             if (!File.Exists(fullpath))
@@ -39,7 +39,7 @@ namespace BuildTask
                 if (!File.Exists(fullpath))
                 {
                     Log.WriteLine($@"ERROR: Can not find blueprint ""{_path}""");
-                    return;
+                    return false;
                 }
             }
             // Fix slashes and turn to lower case
@@ -48,56 +48,57 @@ namespace BuildTask
             if (importedBlueprintFullPaths.Contains(fullpath))
             {
                 // Log.WriteLine($@"Skip import of ""{ _path }"" (already imported).");
-                return;
+                return true;
             }
             importedBlueprintFullPaths.Add(fullpath);
 
             // Log.WriteLine($"Importing { fullpath }...");
-            string stored_cwd = Directory.GetCurrentDirectory();
             string cwd = Path.GetDirectoryName(fullpath);
-            Directory.SetCurrentDirectory(cwd);
-            _path = Path.GetFileName(_path);
-
-            var blueprint = ReadBlueprint(_path);
-            if (blueprint != null)
+            using (new ScopedWorkingDirectory(cwd))
             {
-                if (blueprint.Import != null)
+                _path = Path.GetFileName(_path);
+
+                var blueprint = ReadBlueprint(_path);
+                if (blueprint != null)
                 {
-                    foreach (var import in blueprint.Import)
+                    if (blueprint.Import != null)
                     {
-                        // Log.PushIndent();
-                        Import(import);
-                        // Log.PopIndent();
-                    }
-                }
-                var project = blueprint;
-                if (blueprint.Project != null)
-                {
-                    if (blueprint.Project.Name != null)
-                    {
-                        // Log.WriteLine($@"Found project ""{ blueprint.Project.Name }"" key.");
-                        if (projects.Count(pair => pair.Key == blueprint.Project.Name) == 0)
+                        foreach (var import in blueprint.Import)
                         {
-                            blueprint.Project.FullPath = cwd;
-                            projects.Add(blueprint.Project.Name, blueprint.Project);
+                            // Log.PushIndent();
+                            if (!Import(import))
+                                return false;
+                            // Log.PopIndent();
+                        }
+                    }
+                    var project = blueprint;
+                    if (blueprint.Project != null)
+                    {
+                        if (blueprint.Project.Name != null)
+                        {
+                            // Log.WriteLine($@"Found project ""{ blueprint.Project.Name }"" key.");
+                            if (projects.Count(pair => pair.Key == blueprint.Project.Name) == 0)
+                            {
+                                blueprint.Project.FullPath = cwd;
+                                projects.Add(blueprint.Project.Name, blueprint.Project);
+                            }
+                            else
+                            {
+                                Log.WriteLine("@@ A project with the same name already exist!");
+                            }
                         }
                         else
                         {
-                            Log.WriteLine("@@ A project with the same name already exist!");
+                            Log.WriteLine($@"## Can not find project name.");
                         }
                     }
-                    else
-                    {
-                        Log.WriteLine($@"## Can not find project name.");
-                    }
+                }
+                else
+                {
+                    Log.WriteLine($@"## Fail to read blueprint ""{ fullpath }""!");
                 }
             }
-            else
-            {
-                Log.WriteLine($@"## Fail to read blueprint ""{ fullpath }""!");
-            }
-
-            Directory.SetCurrentDirectory(stored_cwd);
+            return true;
         }
 
         internal void DumpProjectNames()
