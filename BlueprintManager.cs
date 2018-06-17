@@ -19,6 +19,15 @@ namespace BuildTask
         {
         }
 
+        public Project GetProject(string _projectName)
+        {
+            if (projects.TryGetValue(_projectName, out var project))
+            {
+                return project;
+            }
+            return null;
+        }
+
         internal void Import(string _path)
         {
             var fullpath = Path.GetFullPath(_path).ToLower();

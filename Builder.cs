@@ -100,22 +100,6 @@ namespace BuildTask
             return true;
         }
 
-        private void AssignDefaultValuesToUnsetOptionalArguments(Arguments _args)
-        {
-            if (!_args.Compiler.HasValue)
-            {
-                _args.Compiler.Value = ECompiler.Clang6_0;
-            }
-            if (!_args.WarningLevel.HasValue)
-            {
-                _args.WarningLevel = EWarningLevel.High;
-            }
-            if (!_args.StandardCpp.HasValue)
-            {
-                _args.StandardCpp = ECppVersion.Cpp17;
-            }
-        }
-
         internal int Run(string[] commandline_args)
         {
             var commandLine = new CommandLine();
@@ -148,6 +132,7 @@ namespace BuildTask
             // output
             if (commandLine.TryGet("output", out override_outputFilename))
             {
+                override_outputFilename = Path.GetFullPath(override_outputFilename); // override is relative to workspace folder
                 Log.WriteLine($@"Override blueprint output filename by ""{ override_outputFilename }"".");
             }
 
@@ -163,12 +148,11 @@ namespace BuildTask
                 arg_ok = false;
             }
 
-            AssignDefaultValuesToUnsetOptionalArguments(args);
+            var blueprintManager = new BlueprintManager();
 
             IEnumerable<BlueprintManager.Project> project_to_compile = null;
             if (commandLine.TryGet("blueprint", out string blueprint_filename))
             {
-                var blueprintManager = new BlueprintManager();
                 blueprintManager.Import(blueprint_filename);
 
                 project_to_compile = blueprintManager.Touch(commandLine.Files);
@@ -195,22 +179,23 @@ namespace BuildTask
                 return 1;
             }
 
-            var compilo = CompilerFactory.Create(args.Compiler.Value);
+            var compilo = CompilerFactory.Create(args.Compiler.GetValueOrDefault(ECompiler.Clang6_0));
 
             compilo.IntermediaryFileFolderName = "obj";
-            compilo.CppVersion = args.StandardCpp;
-            compilo.WarningLevel = args.WarningLevel;
-            compilo.DebugLevel = args.DebugLevel.Value;
+            compilo.CppVersion = args.StandardCpp.GetValueOrDefault(ECppVersion.Cpp17);
+            compilo.WarningLevel = args.WarningLevel.GetValueOrDefault(EWarningLevel.High);
+            compilo.DebugLevel = args.DebugLevel.GetValueOrDefault(EDebugLevel.NonDebug);
             compilo.WarningAsErrors = args.WarningsAreErrors;
 
             Dictionary<string, string> variables = new Dictionary<string, string>
             {
                 { "compiler_name", compilo.ShortName },
-                { "optimization", args.DebugLevel.Value==EDebugLevel.Debug ? "d" : "r" },
+                { "optimization", compilo.DebugLevel==EDebugLevel.Debug ? "d" : "r" },
                 { "target", "win64" }
             };
 
             int exitCode = 0;
+            string baseIncludePath = Directory.GetCurrentDirectory();
 
             foreach (var project in project_to_compile)
             {
@@ -248,6 +233,13 @@ namespace BuildTask
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
 
+                    //var additionalIncludePath = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => pj.FullPath);
+                    if (project.FullPath != baseIncludePath)
+                    {
+                        string rel = FileUtility.MakeRelative(project.FullPath, baseIncludePath);
+                        compilo.AdditionalIncludePaths = new List<string> { rel };
+                        //Log.WriteLine($@"AdditionalIncludePath: ""{rel}""");
+                    }
                     exitCode = compilo.Run();
                     if (exitCode != 0)
                     {

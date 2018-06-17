@@ -385,18 +385,16 @@ namespace BuildTask.Compilers
         private string GenerateCompilationParametersString()
         {
             List<string> parameters = new List<string>();
-            if (CppVersion.HasValue)
+
+            switch (CppVersion)
             {
-                switch (CppVersion)
-                {
-                    case ECppVersion.Cpp11: parameters.Add("/std:c++11"); break; // unsupported flag
-                    case ECppVersion.Cpp14: parameters.Add("/std:c++14"); break;
-                    case ECppVersion.Cpp17: parameters.Add("/std:c++17"); break;
-                    case ECppVersion.Cpp20: parameters.Add("/std:c++latest"); break;
-                    default: goto case ECppVersion.Cpp17;
-                }
+                case ECppVersion.Cpp11: parameters.Add("/std:c++11"); break; // unsupported flag
+                case ECppVersion.Cpp14: parameters.Add("/std:c++14"); break;
+                case ECppVersion.Cpp17: parameters.Add("/std:c++17"); break;
+                case ECppVersion.Cpp20: parameters.Add("/std:c++latest"); break;
+                default: goto case ECppVersion.Cpp17;
             }
-            switch (WarningLevel.GetValueOrDefault(EWarningLevel.High))
+            switch (WarningLevel)
             {
                 case EWarningLevel.None: parameters.Add("/W0"); break;
                 case EWarningLevel.Low: parameters.Add("/W1"); break;
@@ -406,7 +404,7 @@ namespace BuildTask.Compilers
                 case EWarningLevel.Max: parameters.Add("/Wall"); break;
                 default: goto case EWarningLevel.Low;
             }
-            switch (DebugLevel.GetValueOrDefault(EDebugLevel.NonDebug))
+            switch (DebugLevel)
             {
                 case EDebugLevel.Debug:
                     parameters.Add("/DDEBUG=1");
@@ -422,6 +420,13 @@ namespace BuildTask.Compilers
             if (WarningAsErrors)
             {
                 parameters.Add("/WX");
+            }
+            if (AdditionalIncludePaths!=null)
+            {
+                foreach(var path in AdditionalIncludePaths)
+                {
+                    parameters.Add($"/I{path}");
+                }
             }
             parameters.AddRange(SourceFilePaths);
             parameters.Add($"/Fe{OutputFilepath}");

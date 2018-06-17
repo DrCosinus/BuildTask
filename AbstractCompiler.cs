@@ -13,14 +13,15 @@ namespace BuildTask
         public abstract string ShortName { get; }
         protected virtual void SetupEnvironmentVariables() { }
         protected abstract string ExecutableName { get; }
-        public ECppVersion? CppVersion { protected get; set; }
+        public ECppVersion CppVersion { protected get; set; }
         public string OutputFilepath { set; protected get; }
-        public EWarningLevel? WarningLevel { set; protected get; }
-        public EDebugLevel? DebugLevel { protected get; set; }
+        public EWarningLevel WarningLevel { set; protected get; }
+        public EDebugLevel DebugLevel { get; set; }
         public bool WarningAsErrors { set; protected get; }
         protected virtual string CompilationParameters { get; }
         public List<string> SourceFilePaths { set; protected get; }
         public string IntermediaryFileFolderName { set; protected get; }
+        public IEnumerable<string> AdditionalIncludePaths { set; protected get; }
 
         private StringBuilder OutputBuilder = null;
 

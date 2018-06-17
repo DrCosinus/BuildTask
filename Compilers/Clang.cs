@@ -14,18 +14,15 @@ namespace BuildTask.Compilers
         private string GenerateCompilationParametersString()
         {
             List<string> parameters = new List<string>();
-            if (CppVersion.HasValue)
+            switch (CppVersion)
             {
-                switch (CppVersion)
-                {
-                    case ECppVersion.Cpp11: parameters.Add("-std=c++11"); break;
-                    case ECppVersion.Cpp14: parameters.Add("-std=c++14"); break;
-                    case ECppVersion.Cpp17: parameters.Add("-std=c++17"); break;
-                    case ECppVersion.Cpp20: parameters.Add("-std=c++2a"); break;
-                    default: goto case ECppVersion.Cpp17;
-                }
+                case ECppVersion.Cpp11: parameters.Add("-std=c++11"); break;
+                case ECppVersion.Cpp14: parameters.Add("-std=c++14"); break;
+                case ECppVersion.Cpp17: parameters.Add("-std=c++17"); break;
+                case ECppVersion.Cpp20: parameters.Add("-std=c++2a"); break;
+                default: goto case ECppVersion.Cpp17;
             }
-            switch (WarningLevel.GetValueOrDefault(EWarningLevel.High))
+            switch (WarningLevel)
             {
                 case EWarningLevel.None: break;
                 case EWarningLevel.Low: parameters.Add("-Wall"); break;
@@ -35,7 +32,7 @@ namespace BuildTask.Compilers
                 case EWarningLevel.Max: parameters.Add("-Wall -pedantic -Wextra -Weverything"); break; // should consider to disable the C++98, C++03 specific warnings
                 default: goto case EWarningLevel.Low;
             }
-            switch (DebugLevel.GetValueOrDefault(EDebugLevel.NonDebug))
+            switch (DebugLevel)
             {
                 case EDebugLevel.Debug:
                     parameters.Add("-DDEBUG=1");
@@ -50,6 +47,13 @@ namespace BuildTask.Compilers
             if (WarningAsErrors)
             {
                 parameters.Add("-Werror");
+            }
+            if (AdditionalIncludePaths != null)
+            {
+                foreach (var path in AdditionalIncludePaths)
+                {
+                    parameters.Add($"-I{path}");
+                }
             }
             parameters.AddRange(SourceFilePaths);
             parameters.Add($"-o {OutputFilepath}");

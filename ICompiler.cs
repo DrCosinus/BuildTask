@@ -8,14 +8,15 @@ namespace BuildTask
 {
     interface ICompiler
     {
-        ECppVersion? CppVersion { set; }
-        EWarningLevel? WarningLevel { set; }
-        EDebugLevel? DebugLevel { set; }
+        ECppVersion CppVersion { set; }
+        EWarningLevel WarningLevel { set; }
+        EDebugLevel DebugLevel { set; get; }
         bool WarningAsErrors { set; }
         List<string> SourceFilePaths { set; }
         string OutputFilepath { set; }
         string IntermediaryFileFolderName { set; }
         string ShortName { get; }
+        IEnumerable<string> AdditionalIncludePaths { set; }
 
         int Run();
     }
