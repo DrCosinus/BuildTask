@@ -144,10 +144,11 @@ namespace BuildTask
             // force compilation
             args.ForceCompilation = commandLine.IsPresent("force");
 
+            string override_outputFilename;
             // output
-            if (commandLine.TryGet("output", out string output_filename))
+            if (commandLine.TryGet("output", out override_outputFilename))
             {
-                Log.WriteLine(@"WARNING: Obsolete ""-output"" flag ignored!");
+                Log.WriteLine($@"Override blueprint output filename by ""{ override_outputFilename }"".");
             }
 
             if (commandLine.Files.Count() == 0)
@@ -218,7 +219,7 @@ namespace BuildTask
                 using (new ScopedWorkingDirectory(project.FullPath))
                 using (new ScopedLogIndent())
                 {
-                    string outputFilename = project.ResolveOutput(variables);
+                    string outputFilename = override_outputFilename ?? project.ResolveOutput(variables);
                     var sourceFilenames = project.Sources;
 
                     //if (!args.ForceCompilation)
