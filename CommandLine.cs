@@ -19,7 +19,6 @@ namespace BuildTask
         {
             internal string name;
             internal NeedValue needValue;
-            uint valueCount = 0;
 
             public override string ToString()
             {

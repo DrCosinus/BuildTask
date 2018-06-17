@@ -131,11 +131,11 @@ namespace BuildTask
         {
             public string FullPath;
             public string Name;
-            public List<string> Dependencies;
-            public List<string> Sources;
-            public List<string> Headers;
-            public string Output;
-            public EWarningLevel WarningLevel;
+            public List<string> Dependencies = null;
+            public List<string> Sources = null;
+            public List<string> Headers = null;
+            public string Output = null;
+            public EWarningLevel? WarningLevel = null;
 
             public override string ToString()
             {

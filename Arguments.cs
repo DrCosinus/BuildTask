@@ -11,7 +11,7 @@ namespace BuildTask
         public WriteCounter<ECompiler> Compiler;
         public WriteCounter<EDebugLevel> DebugLevel;
         public EWarningLevel? WarningLevel;
-        public ECppVersion? StandardCpp;
+        public ECppVersion? StandardCpp = null;
         public bool ForceCompilation = false;
         public bool WarningsAreErrors = false;
     }
