@@ -159,11 +159,26 @@ namespace BuildTask
 
                     if (project_to_compile.Count() == 0)
                     {
-                        if (commandLine.Files.Count() > 1)
-                            Log.WriteLine($@"ERROR: No file among { string.Join(", ", commandLine.Files.Select(f => $@"""{f}""")) } belongs to a blueprint!");
+                        if (override_outputFilename != null)
+                        {
+                            project_to_compile = new List<BlueprintManager.Project>
+                            {
+                                new BlueprintManager.Project
+                                {
+                                    Name = "(No Project)",
+                                    Sources = commandLine.Files.ToList(),
+                                    FullPath = Directory.GetCurrentDirectory(),
+                                }
+                            };
+                        }
                         else
-                            Log.WriteLine($@"ERROR: File ""{ commandLine.Files.First() }"" does not belong to a blueprint!");
-                        arg_ok = false;
+                        {
+                            if (commandLine.Files.Count() > 1)
+                                Log.WriteLine($@"ERROR: No file among { string.Join(", ", commandLine.Files.Select(f => $@"""{f}""")) } belongs to a blueprint and no output defined!");
+                            else
+                                Log.WriteLine($@"ERROR: File ""{ commandLine.Files.First() }"" does not belong to a blueprint and no output defined!");
+                            arg_ok = false;
+                        }
                     }
                 }
                 else
