@@ -13,6 +13,7 @@ namespace BuildTask
         EDebugLevel DebugLevel { set; get; }
         bool WarningAsErrors { set; }
         List<string> SourceFilePaths { set; }
+        List<string> LibFilepaths { set; }
         string OutputFilepath { set; }
         string IntermediaryFileFolderName { set; }
         string ShortName { get; }

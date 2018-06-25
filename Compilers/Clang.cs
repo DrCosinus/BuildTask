@@ -58,6 +58,14 @@ namespace BuildTask.Compilers
             parameters.AddRange(SourceFilePaths);
             parameters.Add($"-o {OutputFilepath}");
             parameters.Add("-Xclang -flto-visibility-public-std");
+
+            if (LibFilepaths != null)
+            {
+                foreach (var lib in LibFilepaths)
+                {
+                    parameters.Add($"-Wl,{lib}");
+                }
+            }
             return string.Join(" ", parameters);
         }
 

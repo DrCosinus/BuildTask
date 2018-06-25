@@ -438,6 +438,14 @@ namespace BuildTask.Compilers
             {
                 parameters.Add($"/Fo{IntermediaryFileFolderName}/");
             }
+
+            if (LibFilepaths != null)
+            {
+                foreach (var lib in LibFilepaths)
+                {
+                    parameters.Add($"/link {lib}");
+                }
+            }
             return string.Join(" ", parameters);
         }
         protected override string CompilationParameters

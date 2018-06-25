@@ -143,6 +143,7 @@ namespace BuildTask
             public List<string> Dependencies = null;
             public List<string> Sources = null;
             public List<string> Headers = null;
+            public List<string> Libs = null;
             public string Output = null;
             public EWarningLevel? WarningLevel = null;
 

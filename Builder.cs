@@ -262,6 +262,7 @@ namespace BuildTask
                     //}
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
+                    compilo.LibFilepaths = project.Libs;
 
                     List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
                     if (project.FullFolderPath != baseIncludePath)

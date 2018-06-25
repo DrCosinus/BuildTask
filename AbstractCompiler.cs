@@ -20,6 +20,7 @@ namespace BuildTask
         public bool WarningAsErrors { set; protected get; }
         protected virtual string CompilationParameters { get; }
         public List<string> SourceFilePaths { set; protected get; }
+        public List<string> LibFilepaths { set; protected get; }
         public string IntermediaryFileFolderName { set; protected get; }
         public IEnumerable<string> AdditionalIncludePaths { set; protected get; }
 
