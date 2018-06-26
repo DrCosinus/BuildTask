@@ -439,12 +439,11 @@ namespace BuildTask.Compilers
                 parameters.Add($"/Fo{IntermediaryFileFolderName}/");
             }
 
+            // /link must be the last flag the remaining line will be pass to the linker
             if (LibFilepaths != null)
             {
-                foreach (var lib in LibFilepaths)
-                {
-                    parameters.Add($"/link {lib}");
-                }
+                parameters.Add($"/link");
+                parameters.AddRange(LibFilepaths);
             }
             return string.Join(" ", parameters);
         }
