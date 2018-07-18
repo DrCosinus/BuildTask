@@ -410,7 +410,7 @@ namespace BuildTask.Compilers
                     parameters.Add("/DDEBUG=1");
                     parameters.Add("/Zi");  // enable debugging information 
                     parameters.Add("/Od");
-                    parameters.Add("/Yd");  // put debug info in every.OBJ
+                    // parameters.Add("/Yd");  // [DEPRECATED] put debug info in every.OBJ
                     break;
                 case EDebugLevel.NonDebug:
                     parameters.Add("/DDEBUG=0");
