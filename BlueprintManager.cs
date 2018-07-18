@@ -162,6 +162,12 @@ namespace BuildTask
 
                 return result;
             }
+
+            internal IEnumerable<string> ResolvedSourceFullPaths => Sources?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
+            .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
+            internal IEnumerable<string> ResolvedSourceRelativePaths => ResolvedSourceFullPaths.Select(s => FileUtility.MakeRelative(FullFolderPath, s));
+            internal IEnumerable<string> ResolvedHeaderFullPaths => Headers?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
+            .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
         }
 
         internal IEnumerable<Project> Touch(IEnumerable<string> paths)
@@ -176,8 +182,8 @@ namespace BuildTask
                 var new_projects_to_build = projs.Where(proj =>
                 {
                     return
-                        ((proj.Sources?.Count(filename => Path.Combine(proj.FullFolderPath, filename) == fullpath)).GetValueOrDefault(0) != 0)
-                        || ((proj.Headers?.Count(filename => Path.Combine(proj.FullFolderPath, filename) == fullpath)).GetValueOrDefault(0) != 0);
+                        ((proj.ResolvedSourceFullPaths?.Count(filename => filename == fullpath)).GetValueOrDefault(0) != 0)
+                        || ((proj.ResolvedHeaderFullPaths?.Count(filename => filename == fullpath)).GetValueOrDefault(0) != 0);
                 }).ToList();
                 if (new_projects_to_build.Count != 0)
                 {

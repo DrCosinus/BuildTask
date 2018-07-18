@@ -235,7 +235,7 @@ namespace BuildTask
                 using (new ScopedLogIndent())
                 {
                     string outputFilename = override_outputFilename!=null ? FileUtility.MakeRelative(project.FullFolderPath, override_outputFilename)  : project.ResolveOutput(variables);
-                    var sourceFilenames = project.Sources;
+                    var sourceFilenames = project.ResolvedSourceRelativePaths.ToList();
 
                     //if (!args.ForceCompilation)
                     //{
