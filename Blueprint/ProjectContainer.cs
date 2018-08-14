@@ -6,9 +6,9 @@ using System;
 using System.Xml.Serialization;
 using System.ComponentModel;
 
-namespace BuildTask
+namespace BuildTask.Blueprint
 {
-    class BlueprintManager
+    class ProjectContainer
     {
         static JavaScriptSerializer serializer = new JavaScriptSerializer();
 
@@ -16,7 +16,7 @@ namespace BuildTask
         Dictionary<string, Project> projects = new Dictionary<string, Project>();
         readonly string baseDirectory;
 
-        public BlueprintManager()
+        public ProjectContainer()
         {
             baseDirectory = Directory.GetCurrentDirectory();
         }
@@ -78,12 +78,11 @@ namespace BuildTask
                             // Log.PopIndent();
                         }
                     }
-                    var project = blueprint;
+
                     if (blueprint.Project != null)
                     {
                         if (blueprint.Project.Name != null)
                         {
-                            // Log.WriteLine($@"Found project ""{ blueprint.Project.Name }"" key.");
                             if (projects.Count(pair => pair.Key == blueprint.Project.Name) == 0)
                             {
                                 blueprint.Project.FullFolderPath = cwd;
@@ -109,15 +108,6 @@ namespace BuildTask
             return true;
         }
 
-        internal void DumpProjectNames()
-        {
-            Log.WriteLine($"{ projects.Count() } project found.");
-            foreach (var pair in projects)
-            {
-                Log.WriteLine($@"- ""{ pair.Key }""");
-            }
-        }
-
         private BluePrint ReadBlueprint(string _path)
         {
             BluePrint blueprint = null;
@@ -127,47 +117,6 @@ namespace BuildTask
                 blueprint = serializer.Deserialize<BluePrint>(json);
             }
             return blueprint;
-        }
-
-        class BluePrint
-        {
-            public List<string> Import = null;
-            public Project Project = null;
-        }
-
-        internal class Project
-        {
-            public string FullFolderPath;
-            public string FullFilePath;
-            public string Name;
-            public List<string> Dependencies = null;
-            public List<string> Sources = null;
-            public List<string> Headers = null;
-            public List<string> Libs = null;
-            public string Output = null;
-            public EWarningLevel? WarningLevel = null;
-
-            public override string ToString()
-            {
-                return $@"Project""{ Name }""";
-            }
-
-            internal string ResolveOutput(Dictionary<string, string> _variables)
-            {
-                string result = Output.ReplaceVariable("project_name", Name);
-                foreach (var kv in _variables)
-                {
-                    result = result.ReplaceVariable(kv.Key, kv.Value);
-                }
-
-                return result;
-            }
-
-            internal IEnumerable<string> ResolvedSourceFullPaths => Sources?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
-            .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
-            internal IEnumerable<string> ResolvedSourceRelativePaths => ResolvedSourceFullPaths.Select(s => FileUtility.MakeRelative(FullFolderPath, s));
-            internal IEnumerable<string> ResolvedHeaderFullPaths => Headers?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
-            .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
         }
 
         internal IEnumerable<Project> Touch(IEnumerable<string> paths)
@@ -218,4 +167,4 @@ namespace BuildTask
             return coverage.Where(pj => pj.Output != null);
         }
     }
-}
+} // namespace BuildTask.Blueprint

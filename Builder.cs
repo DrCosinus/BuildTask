@@ -148,30 +148,30 @@ namespace BuildTask
                 arg_ok = false;
             }
 
-            var blueprintManager = new BlueprintManager();
+            var blueprintProjectContainer = new Blueprint.ProjectContainer();
 
-            IEnumerable<BlueprintManager.Project> project_to_compile = null;
+            IEnumerable<Blueprint.Project> project_to_compile = null;
             if (commandLine.TryGet("blueprint", out string blueprint_filename))
             {
-                if (blueprintManager.Import(blueprint_filename))
+                if (blueprintProjectContainer.Import(blueprint_filename))
                 {
                     if (commandLine.Files.Count() == 1 && commandLine.Files.First().EndsWith(".blueprint.json"))
                     {
-                        var project = blueprintManager.GetProjectByFullpath(Path.GetFullPath(commandLine.Files.First()));
+                        var project = blueprintProjectContainer.GetProjectByFullpath(Path.GetFullPath(commandLine.Files.First()));
                         if (project != null)
-                            project_to_compile = new List<BlueprintManager.Project> { project };
+                            project_to_compile = new List<Blueprint.Project> { project };
                     }
                     else
                     {
-                        project_to_compile = blueprintManager.Touch(commandLine.Files);
+                        project_to_compile = blueprintProjectContainer.Touch(commandLine.Files);
                     }
                     if (project_to_compile.Count() == 0)
                     {
                         if (override_outputFilename != null)
                         {
-                            project_to_compile = new List<BlueprintManager.Project>
+                            project_to_compile = new List<Blueprint.Project>
                             {
-                                new BlueprintManager.Project
+                                new Blueprint.Project
                                 {
                                     Name = "(No Project)",
                                     Sources = commandLine.Files.ToList(),
@@ -209,7 +209,7 @@ namespace BuildTask
                 return 1;
             }
 
-            var compilo = CompilerFactory.Create(args.Compiler.GetValueOrDefault(ECompiler.Clang6_0));
+            var compilo = Compilers.Factory.Create(args.Compiler.GetValueOrDefault(ECompiler.Clang6_0));
 
             compilo.IntermediaryFileFolderName = "obj";
             compilo.CppVersion = args.StandardCpp.GetValueOrDefault(ECppVersion.Cpp17);
@@ -264,7 +264,7 @@ namespace BuildTask
                     compilo.SourceFilePaths = sourceFilenames;
                     compilo.LibFilepaths = project.Libs;
 
-                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintManager.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
+                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintProjectContainer.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
                     if (project.FullFolderPath != baseIncludePath)
                     {
                         string rel = FileUtility.MakeRelative(project.FullFolderPath, baseIncludePath);

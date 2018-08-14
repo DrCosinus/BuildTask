@@ -62,21 +62,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractCompiler.cs" />
+    <Compile Include="Compilers\AbstractCompiler.cs" />
     <Compile Include="Arguments.cs" />
-    <Compile Include="BlueprintManager.cs" />
+    <Compile Include="Blueprint\Blueprint.cs" />
+    <Compile Include="Blueprint\ProjectContainer.cs" />
+    <Compile Include="Blueprint\Project.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CommandLine.cs" />
-    <Compile Include="CompilerFactory.cs" />
+    <Compile Include="Compilers\CompilerFactory.cs" />
     <Compile Include="Compilers\Clang.cs" />
     <Compile Include="Compilers\MSVC.cs" />
-    <Compile Include="ECompiler.cs" />
-    <Compile Include="ECppVersion.cs" />
-    <Compile Include="EDebugLevel.cs" />
-    <Compile Include="EWarningLevel.cs" />
+    <Compile Include="Enums\ECompiler.cs" />
+    <Compile Include="Enums\ECppVersion.cs" />
+    <Compile Include="Enums\EDebugLevel.cs" />
+    <Compile Include="Enums\EOutputType.cs" />
+    <Compile Include="Enums\EWarningLevel.cs" />
     <Compile Include="FileUtility.cs" />
-    <Compile Include="ICompiler.cs" />
+    <Compile Include="Compilers\ICompiler.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

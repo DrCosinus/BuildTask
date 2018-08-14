@@ -1,6 +1,6 @@
-﻿namespace BuildTask
+﻿namespace BuildTask.Compilers
 {
-    static class CompilerFactory
+    static class Factory
     {
         public static ICompiler Create(ECompiler compiler)
         {
