@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BuildTask.Blueprint
@@ -41,6 +42,22 @@ namespace BuildTask.Blueprint
         internal IEnumerable<string> ResolvedSourceRelativePaths => ResolvedSourceFullPaths.Select(s => FileUtility.MakeRelative(FullFolderPath, s));
         internal IEnumerable<string> ResolvedHeaderFullPaths => Headers?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
         .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
+
+        internal void DebugTest()
+        {
+            Log.WriteLine($"{Name}:");
+            // to do: transform \ in / in the pattern
+            var filenamePattern = $"[^{ Path.GetInvalidFileNameChars().Aggregate("", (str, c) => $"{str}{c.ToString()}") }]*";
+            var pathPattern = $"[^{ Path.GetInvalidPathChars().Aggregate("", (str, c) => $"{str}{c.ToString()}") }]+";
+            var regex = new Regex($@"^{FullFolderPath}(\\{pathPattern})*\\{filenamePattern}\.hpp");
+            var filepaths0 = Directory.GetFiles(FullFolderPath, "*.*", SearchOption.AllDirectories);
+            var filepaths1 = Directory.GetFiles(FullFolderPath);
+            var filepaths = Directory.GetFiles(FullFolderPath, "*.*", SearchOption.AllDirectories).Where( fullpath => regex.IsMatch(fullpath) ).ToList();
+            foreach(var filepath in filepaths)
+            {
+                Log.WriteLine($"- {filepath}");
+            }
+        }
     }
 
 }
