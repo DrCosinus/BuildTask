@@ -37,27 +37,27 @@ namespace BuildTask.Blueprint
             return result;
         }
 
-        internal IEnumerable<string> ResolvedSourceFullPaths => Sources?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
-        .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
-        internal IEnumerable<string> ResolvedSourceRelativePaths => ResolvedSourceFullPaths.Select(s => FileUtility.MakeRelative(FullFolderPath, s));
-        internal IEnumerable<string> ResolvedHeaderFullPaths => Headers?.Select(filename => Directory.GetFiles(FullFolderPath, filename) as IEnumerable<string>)
-        .Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
+        //static internal string fileCharsPattern = $@"[^{ Path.GetInvalidFileNameChars().Aggregate("", (str, c) => $"{str}{c.ToString()}") }]";
+        private static readonly string fileCharsPattern = $@"[^\x00-\x1f""<>|:*?\\\/]"; // easier to debug
+        private static readonly string recursivePattern = $@"({fileCharsPattern}+\\)*";
+        private static readonly string filePattern = $@"{fileCharsPattern}*";
 
-        internal void DebugTest()
+        private IEnumerable<string> ResolveWilcards(IEnumerable<string> patterns)
         {
-            Log.WriteLine($"{Name}:");
-            // to do: transform \ in / in the pattern
-            var filenamePattern = $"[^{ Path.GetInvalidFileNameChars().Aggregate("", (str, c) => $"{str}{c.ToString()}") }]*";
-            var pathPattern = $"[^{ Path.GetInvalidPathChars().Aggregate("", (str, c) => $"{str}{c.ToString()}") }]+";
-            var regex = new Regex($@"^{FullFolderPath}(\\{pathPattern})*\\{filenamePattern}\.hpp");
-            var filepaths0 = Directory.GetFiles(FullFolderPath, "*.*", SearchOption.AllDirectories);
-            var filepaths1 = Directory.GetFiles(FullFolderPath);
-            var filepaths = Directory.GetFiles(FullFolderPath, "*.*", SearchOption.AllDirectories).Where( fullpath => regex.IsMatch(fullpath) ).ToList();
-            foreach(var filepath in filepaths)
-            {
-                Log.WriteLine($"- {filepath}");
-            }
+            // ** => (\\{filenameCharsPattern}+)* recursive folders
+            // * => {filenameCharsPattern}*
+            // . => \.
+            return patterns?.
+                Select(searchPattern =>
+                {
+                    var re = new Regex($@"^{ FullFolderPath.Replace(@"\", @"\\") }\\{ searchPattern.Replace("/", "\\").Replace(@"\", @"\\").Replace(@"**\\", "<recursivePattern>").Replace("*", filePattern).Replace("<recursivePattern>", recursivePattern).Replace(".", @"\.")}");
+                    return Directory.GetFiles(FullFolderPath, "*", SearchOption.AllDirectories).Where(filepath => re.IsMatch(filepath));
+                }).Aggregate((s1, s2) => { var sum = new List<string>(s1); sum.AddRange(s2); return sum as IEnumerable<string>; });
         }
+
+        internal IEnumerable<string> ResolvedSourceFullPaths => ResolveWilcards(Sources);
+        internal IEnumerable<string> ResolvedSourceRelativePaths => ResolvedSourceFullPaths.Select(s => FileUtility.MakeRelative(FullFolderPath, s));
+        internal IEnumerable<string> ResolvedHeaderFullPaths => ResolveWilcards(Headers);
     }
 
 }

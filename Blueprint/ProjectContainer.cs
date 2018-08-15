@@ -88,8 +88,6 @@ namespace BuildTask.Blueprint
                                 blueprint.Project.FullFolderPath = cwd;
                                 blueprint.Project.FullFilePath = fullpath;
                                 projects.Add(blueprint.Project.Name, blueprint.Project);
-
-                                blueprint.Project.DebugTest();
                             }
                             else
                             {
