@@ -1,0 +1,90 @@
+OVERVIEW: LLVM Linker
+
+USAGE: lld-link.exe [options] <inputs>
+
+OPTIONS:
+  /align:<value>          Section alignment
+  /aligncomm:<value>      Set common symbol alignment
+  /allowbind:no           Disable DLL binding
+  /allowbind              Enable DLL binding (default)
+  /allowisolation:no      Disable DLL isolation
+  /allowisolation         Enable DLL isolation (default)
+  /alternatename:<value>  Define weak alias
+  /appcontainer:no        Image can run outside an app container (default)
+  /appcontainer           Image can only be run in an app container
+  /base:<value>           Base address of the program
+  /Brepro                 Use a hash of the executable as the PE header timestamp
+  --color-diagnostics=<value>
+                          Use colors in diagnostics; one of 'always', 'never', 'auto'
+  --color-diagnostics     Use colors in diagnostics
+  /debugtype:<value>      Debug Info Options
+  /debug                  Embed a symbol table in the image
+  /def:<value>            Use module-definition file
+  /defaultlib:<value>     Add the library to the list of input files
+  /delayload:<value>      Delay loaded DLL name
+  /dll                    Create a DLL
+  /driver:<value>         Generate a Windows NT Kernel Mode Driver
+  /dynamicbase:no         Disable ASLR (default when /fixed)
+  /dynamicbase            Enable ASLR (default unless /fixed)
+  /entry:<value>          Name of entry point symbol
+  /errorlimit:<value>     Maximum number of errors to emit before stopping (0 = no limit)
+  /export:<value>         Export a function
+  /failifmismatch:<value> 
+  /fixed:no               Enable base relocations (default)
+  /fixed                  Disable base relocations
+  /force                  Allow undefined symbols when creating executables
+  /guard:<value>          Control flow guard
+  /heap:<value>           Size of the heap
+  /highentropyva:no       Disable 64-bit ASLR
+  /highentropyva          Enable 64-bit ASLR (default on 64-bit)
+  /ignore:<value>         Specify warning codes to ignore
+  /implib:<value>         Import library name
+  /include:<value>        Force symbol to be added to symbol table as undefined one
+  /incremental:no         Overwrite import library even if contents are unchanged
+  /incremental            Keep original import library if contents are unchanged
+  /integritycheck:no      No effect (default)
+  /integritycheck         Set FORCE_INTEGRITY bit in PE header
+  /largeaddressaware:no   Disable large addresses (default on 32-bit)
+  /largeaddressaware      Enable large addresses (default on 64-bit)
+  /libpath:<value>        Additional library search path
+  /lib                    Act like lib.exe; must be first argument if present
+  /linkrepro:<value>      Dump linker invocation and input files for debugging
+  /lldltocache:<value>    Path to ThinLTO cached object file directory
+  /lldltocachepolicy:<value>
+                          Pruning policy for the ThinLTO cache
+  /lldsavetemps           Save temporary files instead of deleting them
+  /machine:<value>        Specify target platform
+  /manifest:<value>       Create manifest file
+  /manifestdependency:<value>
+                          Attributes for <dependency> in manifest file
+  /manifestfile:<value>   Manifest file path
+  /manifestinput:<value>  Specify manifest file
+  /manifestuac:<value>    User access control
+  /merge:<value>          Combine sections
+  /mllvm:<value>          Options to pass to LLVM
+  /natvis:<value>         Path to natvis file to embed in the PDB
+  /no-color-diagnostics   Do not use colors in diagnostics
+  /nodefaultlib:<value>   Remove a default library
+  /nxcompat:no            Disable data execution provention
+  /nxcompat               Enable data execution prevention (default)
+  /opt:<value>            Control optimizations
+  /order:<value>          Put functions in order
+  /out:<value>            Path to file to write output
+  /pdb:<value>            PDB file path
+  /pdbaltpath:<value>     PDB file path to embed in the image
+  /pdbsourcepath:<value>  Base path used to make relative source file path absolute in PDB
+  --rsp-quoting=<value>   Quoting style for response files, 'windows' (default) or 'posix'
+  /safeseh:no             Don't produce an image with Safe Exception Handler
+  /safeseh                Produce an image with Safe Exception Handler (only for x86)
+  /section:<value>        Specify section attributes
+  /stack:<value>          Size of the stack
+  /stub:<value>           Specify DOS stub file
+  /subsystem:<value>      Specify subsystem
+  /timestamp:<value>      Specify the PE header timestamp
+  /tsaware:no             Create non-Terminal Server aware executable
+  /tsaware                Create Terminal Server aware executable (default)
+  /version:<value>        Specify a version number in the PE header
+  --version               Print version information
+  /wholearchive:<value>   Include all object files from this archive
+  /WX:no                  Don't treat warnings as errors
+  /WX                     Treat warnings as errors

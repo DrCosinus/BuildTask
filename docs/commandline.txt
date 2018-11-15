@@ -1,0 +1,11 @@
+msvc compile:
+cl /std:c++17 /W4 /DDEBUG=0 /DNDEBUG /Ox /WX /I..\tdd /I..\wit /I. /I..\.. quantity_tests.cpp /EHsc /permissive- /nologo /Foobj/roule.obj /c
+
+msvc link:
+link /OUT:plop.exe obj/roule.obj
+
+clang compile:
+clang -std=c++17 -Wall -pedantic -Wextra -DDEBUG=0 -DNDEBUG -O3 -Werror -I..\tdd -I..\wit -I. -I..\.. quantity_tests.cpp -c -o klop.o -Xclang -flto-visibility-public-std
+
+clang link:
+lld-link /out:klop.exe /defaultlib:libcmt klop.o
