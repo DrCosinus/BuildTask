@@ -440,6 +440,8 @@ namespace BuildTask.Compilers
                 parameters.Add($"/Fo{IntermediaryFileFolderName}/");
             }
 
+            parameters.Add("/FC"); // fullpath in diagnotics
+
             // /link must be the last flag the remaining line will be pass to the linker
             if (LibFilepaths != null)
             {
