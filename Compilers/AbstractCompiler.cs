@@ -23,6 +23,8 @@ namespace BuildTask.Compilers
         public List<string> LibFilepaths { set; protected get; }
         public string IntermediaryFileFolderName { set; protected get; }
         public IEnumerable<string> AdditionalIncludePaths { set; protected get; }
+        public List<string> Defines { set; protected get; }
+        public List<string> ExtraFlags { set; protected get; }
 
         private StringBuilder OutputBuilder = null;
 

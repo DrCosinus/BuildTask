@@ -18,6 +18,8 @@ namespace BuildTask.Compilers
         string IntermediaryFileFolderName { set; }
         string ShortName { get; }
         IEnumerable<string> AdditionalIncludePaths { set; }
+        List<string> Defines { set; }
+        List<string> ExtraFlags { set; }
 
         int Run();
     }
