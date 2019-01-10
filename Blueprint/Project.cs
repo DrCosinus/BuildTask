@@ -18,6 +18,9 @@ namespace BuildTask.Blueprint
         public List<string> Sources = null;
         public List<string> Headers = null;
         public List<string> Libs = null;
+        public List<string> Defines = null;
+        public List<string> MSVCExtra = null;
+        public List<string> ClangExtra = null;
         public string Output = null;
         public EWarningLevel? WarningLevel = null;
 

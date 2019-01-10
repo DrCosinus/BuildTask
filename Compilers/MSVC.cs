@@ -163,7 +163,7 @@ namespace BuildTask.Compilers
         private void DiscoverVisualStudio()
         {
             var vs2017 = DiscoverModernVisualStudio("15.0"); // VS 2017
-            if (vs2017!=null)
+            if (vs2017 != null)
             {
                 Log.WriteLine("Compiler: " + vs2017.CompilerPath);
                 Log.WriteLine("Include: " + vs2017.IncludesPath);
@@ -223,7 +223,7 @@ namespace BuildTask.Compilers
 
                                 var compiler_path = compilerKey.GetValue("Compiler") as string;
                                 var folder = Path.GetDirectoryName(compiler_path);
-                                while (folder!=null && !Directory.Exists(Path.Combine(folder, "include")))
+                                while (folder != null && !Directory.Exists(Path.Combine(folder, "include")))
                                 {
                                     folder = Directory.GetParent(folder)?.FullName;
                                 }
@@ -237,43 +237,43 @@ namespace BuildTask.Compilers
                 }
             }
             return null;
-                // RegistryKey.FromHandle()
-/*
-            var installationVersion = instance.GetInstallationVersion();
-            var version = helper.ParseVersion(installationVersion);
+            // RegistryKey.FromHandle()
+            /*
+                        var installationVersion = instance.GetInstallationVersion();
+                        var version = helper.ParseVersion(installationVersion);
 
-            Log.WriteLine($"InstallationVersion: {installationVersion} ({version})");
+                        Log.WriteLine($"InstallationVersion: {installationVersion} ({version})");
 
-            if ((state & InstanceState.Local) == InstanceState.Local)
-            {
-                Log.WriteLine($"InstallationPath: {instance2.GetInstallationPath()}");
-            }
+                        if ((state & InstanceState.Local) == InstanceState.Local)
+                        {
+                            Log.WriteLine($"InstallationPath: {instance2.GetInstallationPath()}");
+                        }
 
-            var catalog = instance as ISetupInstanceCatalog;
-            if (catalog != null)
-            {
-                Log.WriteLine($"IsPrerelease: {catalog.IsPrerelease()}");
-            }
+                        var catalog = instance as ISetupInstanceCatalog;
+                        if (catalog != null)
+                        {
+                            Log.WriteLine($"IsPrerelease: {catalog.IsPrerelease()}");
+                        }
 
-            Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
-            Log.WriteLine($"Description: \"{instance2.GetDescription()}\"");
-            Log.WriteLine($"DisplayName: \"{instance2.GetDisplayName()}\"");
-            Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
-            Log.WriteLine($"InstallationName: \"{instance2.GetInstallationName()}\"");
-            Log.WriteLine($"InstallationPath: \"{instance2.GetInstallationPath()}\"");
-            Log.WriteLine($"InstallationVersion: \"{instance2.GetInstallationVersion()}\"");
-            Log.WriteLine($"InstanceId: \"{instance2.GetInstanceId()}\"");
-            // Print("Packages:", instance2.GetPackages());
-            Print("Product:", instance2.GetProduct());
-            Log.WriteLine($"ProductPath: \"{instance2.GetProductPath()}\"");
-            Print("Properties:", instance2.GetProperties());
-            Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
-*/
+                        Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
+                        Log.WriteLine($"Description: \"{instance2.GetDescription()}\"");
+                        Log.WriteLine($"DisplayName: \"{instance2.GetDisplayName()}\"");
+                        Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
+                        Log.WriteLine($"InstallationName: \"{instance2.GetInstallationName()}\"");
+                        Log.WriteLine($"InstallationPath: \"{instance2.GetInstallationPath()}\"");
+                        Log.WriteLine($"InstallationVersion: \"{instance2.GetInstallationVersion()}\"");
+                        Log.WriteLine($"InstanceId: \"{instance2.GetInstanceId()}\"");
+                        // Print("Packages:", instance2.GetPackages());
+                        Print("Product:", instance2.GetProduct());
+                        Log.WriteLine($"ProductPath: \"{instance2.GetProductPath()}\"");
+                        Print("Properties:", instance2.GetProperties());
+                        Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
+            */
         }
 
         private static void Print(RegistryKey key)
         {
-            foreach(var subkeyName in key.GetSubKeyNames())
+            foreach (var subkeyName in key.GetSubKeyNames())
             {
                 var subkey = key.OpenSubKey(subkeyName);
                 var subpath = subkey.Name;
@@ -285,7 +285,7 @@ namespace BuildTask.Compilers
 
             foreach (var valueName in key.GetValueNames())
             {
-                Log.WriteLine($"- { (string.IsNullOrEmpty(valueName)?"(default value)":valueName) } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = \"{ key.GetValue(valueName) }\"");
+                Log.WriteLine($"- { (string.IsNullOrEmpty(valueName) ? "(default value)" : valueName) } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = \"{ key.GetValue(valueName) }\"");
             }
         }
 
@@ -426,9 +426,9 @@ namespace BuildTask.Compilers
             {
                 parameters.Add("/WX");
             }
-            if (AdditionalIncludePaths!=null)
+            if (AdditionalIncludePaths != null)
             {
-                foreach(var path in AdditionalIncludePaths)
+                foreach (var path in AdditionalIncludePaths)
                 {
                     parameters.Add($"/I{path}");
                 }
@@ -444,8 +444,22 @@ namespace BuildTask.Compilers
                 parameters.Add($"/Fo{IntermediaryFileFolderName}/");
             }
 
-            parameters.Add("/FC"); // fullpath in diagnotics
+            //parameters.Add("/FC"); // fullpath in diagnotics
 
+            if (Defines != null)
+            {
+                foreach (var def in Defines)
+                {
+                    parameters.Add($"/D{def}");
+                }
+            }
+            if (ExtraFlags != null)
+            {
+                foreach (var flag in ExtraFlags)
+                {
+                    parameters.Add($"/{flag}");
+                }
+            }
             // /link must be the last flag the remaining line will be pass to the linker
             if (LibFilepaths != null)
             {

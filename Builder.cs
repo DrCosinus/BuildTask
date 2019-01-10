@@ -263,8 +263,17 @@ namespace BuildTask
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
                     compilo.LibFilepaths = project.Libs;
+                    compilo.Defines = project.Defines;
+                    if (compilo is Compilers.MSVC)
+                    {
+                        compilo.ExtraFlags = project.MSVCExtra;
+                    }
+                    else if (compilo is Compilers.Clang)
+                    {
+                        compilo.ExtraFlags = project.ClangExtra;
+                    }
 
-                    List<string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintProjectContainer.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
+                    List <string> additionalIncludePaths = project.Dependencies.Select(pname => blueprintProjectContainer.GetProject(pname)).Where(pj => pj != null).Select(pj => FileUtility.MakeRelative(project.FullFolderPath, pj.FullFolderPath)).ToList();
                     additionalIncludePaths.Add(".");
                     if (project.FullFolderPath != baseIncludePath)
                     {
