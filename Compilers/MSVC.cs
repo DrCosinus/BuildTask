@@ -167,10 +167,7 @@ namespace BuildTask.Compilers
             {
                 Log.WriteLine("Compiler: " + vs2017.CompilerPath);
                 Log.WriteLine("Include: " + vs2017.IncludesPath);
-
-                // HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots\ -> KitsRoot10
-                string WindowsKit10 = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots", "KitsRoot10", "") as string;
-                Log.WriteLine("Windows Kit 10: " + WindowsKit10);
+                Log.WriteLine("Windows Kit 10: " + Windows10KitBasePath);
             }
         }
 
@@ -336,10 +333,17 @@ namespace BuildTask.Compilers
         }
 
 
+        private static string LatestWindows10Kit()
+        {
+            var kitVersions = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Kits\Installed Roots").GetSubKeyNames();
+            // FIXME: for now, we return the last one...
+            return kitVersions.Where(s => s.StartsWith("10.")).Last();
+        }
+
         private static string MSVCPath;
-        private static string WindowsKitPath => @"C:\Program Files (x86)\Windows Kits"; // should be deduced HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots\KitsRoot10
-        private static string Windows10KitPath(string _group) => $@"{WindowsKitPath}\10\{_group}\10.0.16299.0"; // should be deduced
-                                                                                                                //private static string DotNetFrameworkPath => $@"{WindowsKitPath}\NETFXSDK\4.6.1"; // should be deduced
+        private static string Windows10KitBasePath => Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots", "KitsRoot10", "") as string;
+        private static string Windows10KitPath(string _group) => $@"{Windows10KitBasePath}\{_group}\{ LatestWindows10Kit() }";
+        //private static string DotNetFrameworkPath => $@"{WindowsKitPath}\NETFXSDK\4.6.1"; // should be deduced
 
         protected override void SetupEnvironmentVariables()
         {
