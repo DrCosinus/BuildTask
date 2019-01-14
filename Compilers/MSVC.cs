@@ -127,7 +127,7 @@ namespace BuildTask.Compilers
         private static VisualStudioInfo Parse(ISetupInstance instance)
         {
             var instance2 = (ISetupInstance2)instance;
-            var state = instance2.GetState();
+            //var state = instance2.GetState();
 
             var vsVersionCandidates = Directory.GetDirectories($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio")
                 .Select(c => VSVersion.ParseFolderName(c))
@@ -137,12 +137,10 @@ namespace BuildTask.Compilers
             Log.WriteLine($"Found {vsVersionCandidates.Count()} version(s) of visual studio:");
             foreach (var c in vsVersionCandidates)
             {
-                Log.WriteLine($"- {c.asString}");
+                Log.WriteLine($"  {c.asString}");
             }
 
-            var latestVSVersion = vsVersionCandidates
-                .OrderBy(v => v)
-                .LastOrDefault();
+            var latestVSVersion = vsVersionCandidates.OrderBy(v => v).LastOrDefault();
 
             if (latestVSVersion.IsValid)
             {
@@ -267,7 +265,7 @@ namespace BuildTask.Compilers
             {
                 case EDebugLevel.Debug:
                     parameters.Add("/DDEBUG=1");
-                    parameters.Add("/Zi");  // enable debugging information 
+                    parameters.Add("/Zi");  // enable debugging information
                     parameters.Add("/Od");
                     // parameters.Add("/Yd");  // [DEPRECATED] put debug info in every.OBJ
                     break;
@@ -291,15 +289,15 @@ namespace BuildTask.Compilers
             parameters.AddRange(SourceFilePaths);
             parameters.Add($"/Fe{OutputFilepath}");
             parameters.Add("/EHsc"); // avoid warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-            parameters.Add("/permissive-"); // disable soms nonconforming code to compile
+            parameters.Add("/permissive-"); // disable some nonconforming code to compile
                                             //parameters.Add("/Za"); // disable extensions... unfortunately some extension are required in some windows header :(
             parameters.Add("/nologo"); // disable copyright message
             if (!string.IsNullOrEmpty(IntermediaryFileFolderName))
             {
-                parameters.Add($"/Fo{IntermediaryFileFolderName}/");
+                parameters.Add($@"/Fo{IntermediaryFileFolderName}\");
             }
 
-            //parameters.Add("/FC"); // fullpath in diagnotics
+            //parameters.Add("/FC"); // full path in diagnostics
 
             if (Defines != null)
             {

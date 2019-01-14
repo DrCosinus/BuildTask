@@ -211,7 +211,6 @@ namespace BuildTask
 
             var compilo = Compilers.Factory.Create(args.Compiler.GetValueOrDefault(ECompiler.Clang6_0));
 
-            compilo.IntermediaryFileFolderName = "obj";
             compilo.CppVersion = args.StandardCpp.GetValueOrDefault(ECppVersion.Cpp17);
             compilo.WarningLevel = args.WarningLevel.GetValueOrDefault(EWarningLevel.High);
             compilo.DebugLevel = args.DebugLevel.GetValueOrDefault(EDebugLevel.NonDebug);
@@ -260,6 +259,7 @@ namespace BuildTask
                     //{
                     //    Log.WriteLine("Forced compilation.");
                     //}
+                    compilo.IntermediaryFileFolderName = FileUtility.MakeRelative(project.FullFolderPath, $@"{baseIncludePath}\obj");
                     compilo.OutputFilepath = outputFilename;
                     compilo.SourceFilePaths = sourceFilenames;
                     compilo.LibFilepaths = project.Libs;
