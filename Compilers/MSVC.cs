@@ -20,144 +20,16 @@ namespace BuildTask.Compilers
 
         // we need a windows kit abstraction
 
-        enum millesim
-        {
-            VS_Community_2015
-            , VS_Professional_2015
-            , VS_Community_2017
-            , VS_Professional_2017
-            , VS_Enterprise_2017
-            , VS_Community_Preview2017
-            , VS_Professional_Preview2017
-            , VS_Enterprise_Preview2017
-        };
-        enum toolChain { x86, x64 };
-        enum target { x86, x64, arm };
-
-        // Environment.Is64BitOperatingSystem => Wow6432Node
-
-        // ## VISUAL STUDIO 14 -> 2015
-        // =>   C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC
-        //      register base: \HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0 + "VC"
-        //
-        // should contain
-        //      bin\amd64\      for building with 64bit toolchain for 64bit     HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\VC\19.0\x64\x64\Compiler
-        //      bin\amd64_x86\  for building with 64bit toolchain for 32bit
-        //      bin\amd64_arm\  for building with 64bit toolchain for arm       HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\VC\19.0\x64\arm\Compiler
-        //      bin\x86_amd64\  for building with 32bit toolchain for 64bit
-        //      bin\            for building with 32bit toolchain for 32bit
-        //      bin\x86_arm\    for building with 32bit toolchain for arm
-        //      lib\            for building for 32bit
-        //      lib\amd64\      for building for 64bit
-        //      include\        includes
-        //
-        // INCLUDE =
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\ucrt;
-        //      C:\Program Files(x86)\Windows Kits\NETFXSDK\4.6.1\include\um;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\shared;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\um;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\winrt;
-        //
-        //  LIB =
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\LIB;
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB;
-        //      C:\Program Files(x86)\Windows Kits\10\lib\10.0.17134.0\ucrt\x86;
-        //      C:\Program Files(x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\x86;
-        //      C:\Program Files(x86)\Windows Kits\10\lib\10.0.17134.0\um\x86;
-        //
-        //  LIBPATH =
-        //      C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319;
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\LIB;
-        //      C:\Program Files(x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB;
-        //      C:\Program Files(x86)\Windows Kits\10\UnionMetadata;
-        //      C:\Program Files(x86)\Windows Kits\10\References;
-        //      \Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;
-
-        // ## VISUAL STUDIO 15 -> 2017
-        // =>   Professional => C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC
-        // =>   Community => C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC
-        // =>   Professional Preview => C:\Program Files (x86)\Microsoft Visual Studio\Preview\Professional\VC\Tools\MSVC
-        // =>   Community Preview => C:\Program Files (x86)\Microsoft Visual Studio\Preview\Community\VC\Tools\MSVC
-        // should contain
-        //      14.xx.yyyyy\bin\Hostx64\x64\    for building with 64bit toolchain for 64bit
-        //      14.xx.yyyyy\bin\Hostx64\x86\    for building with 64bit toolchain for 32bit
-        //      14.xx.yyyyy\bin\Hostx86\x64\    for building with 32bit toolchain for 64bit
-        //      14.xx.yyyyy\bin\Hostx86\x86\    for building with 32bit toolchain for 32bit
-        //      14.xx.yyyyy\bin\Hostx86\arm\    for building with 32bit toolchain for arm32bit
-        //      14.xx.yyyyy\bin\Hostx86\arm64\  for building with 32bit toolchain for arm64bit
-        //      14.xx.yyyyy\lib\x64\            for building for 64bit
-        //      14.xx.yyyyy\lib\x86\            for building for 32bit
-        //      14.xx.yyyyy\include\            includes
-        //
-        // INCLUDE =
-        //      C:\Program Files(x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\ATLMFC\include;
-        //      C:\Program Files(x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\include;
-        //      C:\Program Files(x86)\Windows Kits\NETFXSDK\4.6.1\include\um;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\ucrt;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\shared;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\um;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\winrt;
-        //      C:\Program Files(x86)\Windows Kits\10\include\10.0.17134.0\cppwinrt
-        // LIB =
-        //      C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\ATLMFC\lib\x86;
-        //      C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\lib\x86;
-        //      C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\x86;
-        //      C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\ucrt\x86;
-        //      C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\um\x86;
-        //
-        // LIBPATH =
-        //      C:\Program Files(x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\ATLMFC\lib\x86;
-        //      C:\Program Files(x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\lib\x86;
-        //      C:\Program Files(x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.14.26428\lib\x86\store\references;
-        //      C:\Program Files(x86)\Windows Kits\10\UnionMetadata\10.0.17134.0;
-        //      C:\Program Files(x86)\Windows Kits\10\References\10.0.17134.0;
-        //      C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319;
-
         public MSVC()
         {
             DiscoverVisualStudio();
-
-            var drives = DriveInfo.GetDrives().Select(d => d.Name);
-            string[] vintages = { "Preview", "2017" };
-            string[] flavors = { "Professional", "Community" };
-
-            foreach (var drive in drives)
-            {
-                foreach (var vintage in vintages)
-                {
-                    foreach (var flavor in flavors)
-                    {
-                        string candidate = $@"{drive}Program Files (x86)\Microsoft Visual Studio\{vintage}\{flavor}\VC\Tools\MSVC";
-                        if (Directory.Exists(candidate))
-                        {
-                            var sub_folders = Directory.GetDirectories(candidate);
-                            var filtered = sub_folders.Where(path =>
-                               Directory.Exists(Path.Combine(path, @"bin\HostX64\x64"))
-                               && Directory.Exists(Path.Combine(path, @"include"))
-                               && Directory.Exists(Path.Combine(path, @"lib\x64"))
-                                );
-                            // todo: should consider to accept more than one version
-                            //      interactive mode: manual selection
-                            //      automatic mode: most recent version
-                            if (filtered.Count() == 1)
-                            {
-                                MSVCPath = filtered.First();
-                                Log.WriteLine($"Found MSVC \"{ MSVCPath }\"...");
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-            throw new Exception("Can not find MSVC!");
         }
 
         class VisualStudioInfo
         {
             public string CompilerPath;
             public string IncludesPath;
+            public string LibsPath;
         }
 
         private void DiscoverVisualStudio()
@@ -165,9 +37,7 @@ namespace BuildTask.Compilers
             var vs2017 = DiscoverModernVisualStudio("15.0"); // VS 2017
             if (vs2017 != null)
             {
-                Log.WriteLine("Compiler: " + vs2017.CompilerPath);
-                Log.WriteLine("Include: " + vs2017.IncludesPath);
-                Log.WriteLine("Windows Kit 10: " + Windows10KitBasePath);
+                visualStudioInfo = vs2017;
             }
         }
 
@@ -177,8 +47,6 @@ namespace BuildTask.Compilers
             var query = new SetupConfiguration();
             var query2 = (ISetupConfiguration2)query;
             var e = query2.EnumAllInstances();
-
-            //var helper = (ISetupHelper)query;
 
             int fetched;
             var instances = new ISetupInstance[1];
@@ -198,7 +66,6 @@ namespace BuildTask.Compilers
         {
             var instance2 = (ISetupInstance2)instance;
             var state = instance2.GetState();
-            // Log.WriteLine($"InstanceId: {instance2.GetInstanceId()} ({(state == InstanceState.Complete ? "Complete" : "Incomplete")})");
 
             //VS 2017
             var hKey = RegistryNative.RegLoadAppKey($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio\{ vsWantedVersion }_{ instance2.GetInstanceId() }\privateregistry.bin");
@@ -219,8 +86,6 @@ namespace BuildTask.Compilers
                                 string target = Environment.Is64BitOperatingSystem ? "x64" : "x86";
                                 var compilerKey = vc19Key.OpenSubKey($@"{ host }\{ target }"); // host\target
 
-                                //Print(appKey);
-
                                 var compiler_path = compilerKey.GetValue("Compiler") as string;
                                 var folder = Path.GetDirectoryName(compiler_path);
                                 while (folder != null && !Directory.Exists(Path.Combine(folder, "include")))
@@ -228,110 +93,16 @@ namespace BuildTask.Compilers
                                     folder = Directory.GetParent(folder)?.FullName;
                                 }
                                 var include_path = Path.Combine(folder, "include");
+                                var libs_path = Path.Combine(folder, $"lib\\{target}");
 
-                                return new VisualStudioInfo { CompilerPath = compiler_path, IncludesPath = include_path };
-                                //Print(appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }"));
+                                return new VisualStudioInfo { CompilerPath = Path.GetDirectoryName(compiler_path), IncludesPath = include_path, LibsPath = libs_path };
                             }
                         }
                     }
                 }
             }
             return null;
-            // RegistryKey.FromHandle()
-            /*
-                        var installationVersion = instance.GetInstallationVersion();
-                        var version = helper.ParseVersion(installationVersion);
-
-                        Log.WriteLine($"InstallationVersion: {installationVersion} ({version})");
-
-                        if ((state & InstanceState.Local) == InstanceState.Local)
-                        {
-                            Log.WriteLine($"InstallationPath: {instance2.GetInstallationPath()}");
-                        }
-
-                        var catalog = instance as ISetupInstanceCatalog;
-                        if (catalog != null)
-                        {
-                            Log.WriteLine($"IsPrerelease: {catalog.IsPrerelease()}");
-                        }
-
-                        Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
-                        Log.WriteLine($"Description: \"{instance2.GetDescription()}\"");
-                        Log.WriteLine($"DisplayName: \"{instance2.GetDisplayName()}\"");
-                        Log.WriteLine($"EnginePath: \"{instance2.GetEnginePath()}\"");
-                        Log.WriteLine($"InstallationName: \"{instance2.GetInstallationName()}\"");
-                        Log.WriteLine($"InstallationPath: \"{instance2.GetInstallationPath()}\"");
-                        Log.WriteLine($"InstallationVersion: \"{instance2.GetInstallationVersion()}\"");
-                        Log.WriteLine($"InstanceId: \"{instance2.GetInstanceId()}\"");
-                        // Print("Packages:", instance2.GetPackages());
-                        Print("Product:", instance2.GetProduct());
-                        Log.WriteLine($"ProductPath: \"{instance2.GetProductPath()}\"");
-                        Print("Properties:", instance2.GetProperties());
-                        Log.WriteLine($"ResolvePath(\"VC\"): \"{instance2.ResolvePath("VC")}\"");
-            */
         }
-
-        private static void Print(RegistryKey key)
-        {
-            foreach (var subkeyName in key.GetSubKeyNames())
-            {
-                var subkey = key.OpenSubKey(subkeyName);
-                var subpath = subkey.Name;
-                Log.WriteLine(subpath);
-                Log.PushIndent();
-                Print(subkey);
-                Log.PopIndent();
-            }
-
-            foreach (var valueName in key.GetValueNames())
-            {
-                Log.WriteLine($"- { (string.IsNullOrEmpty(valueName) ? "(default value)" : valueName) } ({Enum.GetName(typeof(RegistryValueKind), key.GetValueKind(valueName))}) = \"{ key.GetValue(valueName) }\"");
-            }
-        }
-
-        private static void Print(string intro, ISetupPropertyStore properties)
-        {
-            Log.WriteLine(intro);
-            Log.WriteLine("{");
-            Log.PushIndent();
-            foreach (var propertyName in properties.GetNames())
-            {
-                Log.WriteLine($"{propertyName}= \"{properties.GetValue(propertyName)}\"");
-            }
-            Log.PopIndent();
-            Log.WriteLine("}");
-        }
-
-        private static void Print(string intro, ISetupPackageReference[] packages)
-        {
-            Log.WriteLine(intro);
-            Log.WriteLine("{");
-            Log.PushIndent();
-            foreach (var package in packages)
-            {
-                Print("Package:", package);
-            }
-            Log.PopIndent();
-            Log.WriteLine("}");
-        }
-
-        private static void Print(string intro, ISetupPackageReference package)
-        {
-            Log.WriteLine(intro);
-            Log.WriteLine("{");
-            Log.PushIndent();
-            Log.WriteLine($"Branch: \"{package.GetBranch()}\"");
-            Log.WriteLine($"Chip: \"{package.GetChip()}\"");
-            Log.WriteLine($"Id: \"{package.GetId()}\"");
-            Log.WriteLine($"IsExtension: \"{package.GetIsExtension()}\"");
-            Log.WriteLine($"IsLanguage: \"{package.GetLanguage()}\"");
-            Log.WriteLine($"Type: \"{package.GetType()}\"");
-            Log.WriteLine($"UniqueId: \"{package.GetUniqueId()}\"");
-            Log.WriteLine($"Version: \"{package.GetVersion()}\"");
-            Log.PopIndent();
-            Log.WriteLine("}");
-        }
-
 
         private static string LatestWindows10Kit()
         {
@@ -340,7 +111,7 @@ namespace BuildTask.Compilers
             return kitVersions.Where(s => s.StartsWith("10.")).Last();
         }
 
-        private static string MSVCPath;
+        private VisualStudioInfo visualStudioInfo;
         private static string Windows10KitBasePath => Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots", "KitsRoot10", "") as string;
         private static string Windows10KitPath(string _group) => $@"{Windows10KitBasePath}\{_group}\{ LatestWindows10Kit() }";
         //private static string DotNetFrameworkPath => $@"{WindowsKitPath}\NETFXSDK\4.6.1"; // should be deduced
@@ -348,12 +119,12 @@ namespace BuildTask.Compilers
         protected override void SetupEnvironmentVariables()
         {
             Environment.SetEnvironmentVariable("PATH", string.Join(";"
-                , $@"{MSVCPath}\bin\HostX64\x64"
+                , $@"{visualStudioInfo.CompilerPath}"
                 , $"{Environment.GetEnvironmentVariable("PATH")}"
                 ));
             Environment.SetEnvironmentVariable("INCLUDE", string.Join(";"
                 //, $@"{MSVCPath}\ATLMFC\include"
-                , $@"{MSVCPath}\include"
+                , $@"{visualStudioInfo.IncludesPath}"
                 //, $@"{DotNetFrameworkPath}\include\um"
                 , $@"{Windows10KitPath("include")}\ucrt"
                 , $@"{Windows10KitPath("include")}\shared"
@@ -363,7 +134,7 @@ namespace BuildTask.Compilers
                 ));
             Environment.SetEnvironmentVariable("LIB", string.Join(";"
                 //, $@"{MSVCPath}\ATLMFC\lib\x64"
-                , $@"{MSVCPath}\lib\x64"
+                , $@"{visualStudioInfo.LibsPath}"
                 //, $@"{DotNetFrameworkPath}\lib\um\x64"
                 , $@"{Windows10KitPath("lib")}\ucrt\x64"
                 , $@"{Windows10KitPath("lib")}\um\x64"
