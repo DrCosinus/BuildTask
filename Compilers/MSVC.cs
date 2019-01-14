@@ -63,61 +63,91 @@ namespace BuildTask.Compilers
             return null;
         }
 
-        private static Regex versionRegex = new Regex(@"(?<major>\d+)\.(?<minor>\d+)_(?<instanceId>[0-9a-f]{8})", RegexOptions.Compiled);
-
-        private struct Version : IComparable<Version>
+        private struct VSVersion : IComparable<VSVersion>
         {
+            private static Regex versionRegex = new Regex(@"(?<major>\d+)\.(?<minor>\d+)_(?<instanceId>[0-9a-f]{8})", RegexOptions.Compiled);
+
             public string asString;
             public uint major;
             public uint minor;
             public uint instanceId;
+            public bool IsValid => asString != null;
 
-            public int CompareTo(Version other)
+
+            public int CompareTo(VSVersion other)
             {
                 if (major > other.major || (major == other.major && minor > other.minor) || (major == other.major && minor == other.minor && instanceId > other.instanceId)) return 1;
                 if (major == other.major && minor == other.minor && instanceId == other.instanceId) return 0;
                 return -1;
             }
+            internal static VSVersion? ParseFolderName(string str)
+            {
+                var m = versionRegex.Match(str);
+                if (!m.Success)
+                    return null;
+                return new VSVersion
+                {
+                    asString = m.Groups[0].Value,
+                    major = uint.Parse(m.Groups["major"].Value),
+                    minor = uint.Parse(m.Groups["minor"].Value),
+                    instanceId = Convert.ToUInt32(m.Groups["instanceId"].Value, 16)
+                };
+            }
         };
 
-        private static Version? ParseFolderNameForVersion(string str)
+        private struct VCVersion : IComparable<VCVersion>
         {
-            var m = versionRegex.Match(str);
-            if (!m.Success)
-                return null;
-            return new Version
+            private static Regex versionRegex = new Regex(@"(?<major>\d+)\.(?<minor>\d+)", RegexOptions.Compiled);
+
+            public string asString;
+            public uint major;
+            public uint minor;
+            public bool IsValid => asString != null;
+
+            public int CompareTo(VCVersion other)
             {
-                asString = m.Groups[0].Value,
-                major = uint.Parse(m.Groups["major"].Value),
-                minor = uint.Parse(m.Groups["minor"].Value),
-                instanceId = Convert.ToUInt32(m.Groups["instanceId"].Value, 16)
-            };
-        }
+                if (major > other.major || (major == other.major && minor > other.minor)) return 1;
+                if (major == other.major && minor == other.minor) return 0;
+                return -1;
+            }
+            internal static VCVersion? ParseKeyName(string str)
+            {
+                var m = versionRegex.Match(str);
+                if (!m.Success)
+                    return null;
+                return new VCVersion
+                {
+                    asString = m.Groups[0].Value,
+                    major = uint.Parse(m.Groups["major"].Value),
+                    minor = uint.Parse(m.Groups["minor"].Value)
+                };
+            }
+        };
 
         private static VisualStudioInfo Parse(ISetupInstance instance)
         {
             var instance2 = (ISetupInstance2)instance;
             var state = instance2.GetState();
 
-            var candidates = Directory.GetDirectories($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio")
-                .Select(c => ParseFolderNameForVersion(c))
+            var vsVersionCandidates = Directory.GetDirectories($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio")
+                .Select(c => VSVersion.ParseFolderName(c))
                 .Where(c => c.HasValue)
                 .Select(c => c.Value);
 
-            Log.WriteLine($"Found {candidates.Count()} version(s) of visual studio:");
-            foreach (var c in candidates)
+            Log.WriteLine($"Found {vsVersionCandidates.Count()} version(s) of visual studio:");
+            foreach (var c in vsVersionCandidates)
             {
                 Log.WriteLine($"- {c.asString}");
             }
 
-            var latestVersion = candidates
+            var latestVSVersion = vsVersionCandidates
                 .OrderBy(v => v)
                 .LastOrDefault();
 
-            if (latestVersion.asString != null)
+            if (latestVSVersion.IsValid)
             {
-                Log.WriteLine($"Using visual studio { latestVersion.asString }");
-                var hKey = RegistryNative.RegLoadAppKey($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio\{ latestVersion.asString }\privateregistry.bin");
+                Log.WriteLine($"Using visual studio { latestVSVersion.asString }");
+                var hKey = RegistryNative.RegLoadAppKey($@"{ Environment.GetEnvironmentVariable("LOCALAPPDATA") }\Microsoft\VisualStudio\{ latestVSVersion.asString }\privateregistry.bin");
                 using (var safeRegistryHandle = new SafeRegistryHandle(new IntPtr(hKey), true))
                 {
                     if (safeRegistryHandle != null)
@@ -126,25 +156,29 @@ namespace BuildTask.Compilers
                         {
                             if (appKey != null)
                             {
-                                var vcKey = appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }_Config\VC");
-                                if (vcKey != null)
+                                var vcKeys = appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }_Config\VC");
+                                if (vcKeys != null)
                                 {
-                                    var t = vcKey.GetSubKeyNames();
-                                    var vc19Key = vcKey.OpenSubKey(vcKey.GetSubKeyNames()[0]);
-                                    string host = Environment.Is64BitOperatingSystem ? "x64" : "x86";
-                                    string target = Environment.Is64BitOperatingSystem ? "x64" : "x86";
-                                    var compilerKey = vc19Key.OpenSubKey($@"{ host }\{ target }"); // host\target
-
-                                    var compiler_path = compilerKey.GetValue("Compiler") as string;
-                                    var folder = Path.GetDirectoryName(compiler_path);
-                                    while (folder != null && !Directory.Exists(Path.Combine(folder, "include")))
+                                    var vcVersionCandidates = vcKeys.GetSubKeyNames().Select(c => VCVersion.ParseKeyName(c)).Where(c => c.HasValue).Select(c => c.Value);
+                                    var latestVCVersion = vcVersionCandidates.OrderBy(v => v).LastOrDefault();
+                                    if (latestVCVersion.IsValid)
                                     {
-                                        folder = Directory.GetParent(folder)?.FullName;
-                                    }
-                                    var include_path = Path.Combine(folder, "include");
-                                    var libs_path = Path.Combine(folder, $"lib\\{target}");
+                                        var vcKey = vcKeys.OpenSubKey(latestVCVersion.asString);
+                                        string host = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                                        string target = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                                        var compilerKey = vcKey.OpenSubKey($@"{ host }\{ target }"); // host\target
 
-                                    return new VisualStudioInfo { CompilerPath = Path.GetDirectoryName(compiler_path), IncludesPath = include_path, LibsPath = libs_path };
+                                        var compiler_path = compilerKey.GetValue("Compiler") as string;
+                                        var folder = Path.GetDirectoryName(compiler_path);
+                                        while (folder != null && !Directory.Exists(Path.Combine(folder, "include")))
+                                        {
+                                            folder = Directory.GetParent(folder)?.FullName;
+                                        }
+                                        var include_path = Path.Combine(folder, "include");
+                                        var libs_path = Path.Combine(folder, $"lib\\{target}");
+
+                                        return new VisualStudioInfo { CompilerPath = Path.GetDirectoryName(compiler_path), IncludesPath = include_path, LibsPath = libs_path };
+                                    }
                                 }
                             }
                         }
