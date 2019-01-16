@@ -154,7 +154,7 @@ namespace BuildTask.Compilers
                         {
                             if (appKey != null)
                             {
-                                var vcKeys = appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\15.0_{ instance2.GetInstanceId() }_Config\VC");
+                                var vcKeys = appKey.OpenSubKey($@"Software\Microsoft\VisualStudio\{ latestVSVersion.asString }_Config\VC");
                                 if (vcKeys != null)
                                 {
                                     var vcVersionCandidates = vcKeys.GetSubKeyNames().Select(c => VCVersion.ParseKeyName(c)).Where(c => c.HasValue).Select(c => c.Value);
