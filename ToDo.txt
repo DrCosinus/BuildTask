@@ -1,0 +1,9 @@
+﻿20190118-1700:
+- blob/unity/jumbo management
+- obj/o files management
+- project output types: exe/elf, lib/a, dll/ro
+- map file generation facilities
+- disas objdump
+- unit test facilities
+- bench facilities
+- modules
