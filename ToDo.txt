@@ -7,3 +7,7 @@
 - unit test facilities
 - bench facilities
 - modules
+
+- imported paths should be relative to the path of the blueprint they are into
+- fallback parameters (parameters in blueprints should be the default parameters of the imported blueprints)
+- blueprint parameters should have priority on command line arguments
