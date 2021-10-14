@@ -1,0 +1,229 @@
+                         OPTIONS DU COMPILATEUR C/C++
+
+
+                              -OPTIMISATION-
+
+/O1 optimisations maximales (favoriser l'espace)
+/O2 optimisations maximales (favoriser la vitesse)
+/Ob<n> expansion inline (n=0 par défaut)
+/Od désactiver les optimisations (par défaut)
+/Og activer l'optimisation globale      
+/Oi[-] activer les fonctions intrinsèques
+/Os privilégier l'espace du code        /Ot privilégier la vitesse du code
+/Ox optimisations (favoriser la vitesse)
+/favor:<blend|AMD64|INTEL64|ATOM> sélectionner le processeur à optimiser, au choix :
+    blend - combinaison d'optimisations pour plusieurs processeurs x64 différents
+    AMD64 - processeurs AMD 64 bits                                 
+    INTEL64 - processeurs d'architecture Intel(R)64                  
+    ATOM - processeurs Intel(R) Atom(TM)                           
+
+                             -GÉNÉRATION DE CODE-
+
+/Gu[-] permet de vérifier que les fonctions distinctes ont des adresses distinctes
+/Gw[-] séparer les variables globales pour l'Éditeur de liens
+/GF activer le regroupement des chaînes en lecture seule
+/Gm[-] activer la régénération minimale 
+/Gy[-] séparer les fonctions pour l'Éditeur de liens
+/GS[-] activer les vérifications de la sécurité
+/GR[-] activer C++ RTTI                 
+/GX[-] activer C++ EH (identique à /EHsc)
+/guard:cf[-] activer CFG (protection du flux de contrôle)
+/EHs activer C++ EH (sans exception SEH)
+/EHa activer C++ EH (avec exceptions SEH)
+/EHc extern " C" a pour valeur par défaut nothrow
+/EHr génère toujours des contrôles d'arrêt de runtime noexcept
+/fp:<except[-]|fast|precise|strict> choisir le modèle de virgule flottante :
+    except[-] - prendre en considération les exceptions de virgule flottante lors de la génération du code
+    fast - modèle de virgule flottante « rapide » ; les résultats sont moins prévisibles
+    precise - modèle de virgule flottante « précise » ; les résultats sont prévisibles
+    strict - modèle de virgule flottante « stricte » (implique /fp:except)
+/Qfast_transcendentals générer des intrinsèques FP inline même avec /fp:except
+/Qspectre[-] activer les atténuations pour CVE 2017-5753
+/Qpar[-] activer la génération de code parallèle
+/Qpar-report:1 diagnostic du paralléliseur automatique ; indiquer les boucles parallélisées
+/Qpar-report:2 diagnostic du paralléliseur automatique ; indiquer les boucles non parallélisées
+/Qvec-report:1 diagnostic du vectoriseur automatique ; indiquer les boucles vectorisées
+/Qvec-report:2 diagnostic du vectoriseur automatique ; indiquer les boucles non vectorisées
+/GL[-] activer la génération du code durant l'édition des liens
+/volatile:<iso|ms> choisir le modèle de volatile :
+    iso - Les sémantiques acquire/release ne sont pas garanties sur les accès volatiles
+    ms - Les sémantiques acquire/release sont garanties sur les accès volatiles
+/GA optimiser pour les applications Windows
+/Ge forcer le contrôle de pile pour toutes les fonctions
+/Gs[num] contrôler les appels de contrôle de pile
+/Gh activer l'appel de la fonction _penter
+/GH activer l'appel de la fonction _pexit
+/GT générer les accès TLS à fibres sécurisées
+/RTC1 Activer les contrôles rapides (/RTCsu)
+/RTCc Contrôles de la conversion des types les plus petits
+/RTCs Contrôles à l'exécution des frames de pile
+/RTCu Contrôles de l'utilisation des variables locales non initialisées
+/clr[:option] compiler pour le Common Language Runtime, où option correspond à :
+    pure - produire un fichier de sortie IL uniquement (pas de code exécutable natif)
+    safe - produire un fichier de sortie vérifiable IL uniquement
+    initialAppDomain - activer le comportement AppDomain initial de Visual C++ 2002
+    noAssembly - ne pas produire d'assembly
+    nostdlib - ignorer le répertoire \clr par défaut
+/homeparams forcer l'écriture dans la pile des paramètres passés dans les registres
+/GZ Activer les contrôles de pile (/RTCs)
+/arch:AVX autoriser l'utilisation des instructions disponibles avec les UC compatibles AVX
+/arch:AVX2 autoriser l'utilisation des instructions disponibles avec les UC compatibles AVX2
+/Gv convention d'appel __vectorcall     
+
+                              -FICHIERS DE SORTIE-
+
+/Fa[fichier] nommer le fichier listing d'assembly
+/FA[scu] configurer le listing assembleur
+/Fd[fichier] nommer le fichier .PDB     
+/Fe<fichier> nommer le fichier exécutable
+/Fm[fichier] nommer le fichier de mappage
+/Fo<fichier> nommer le fichier objet    
+/Fp<fichier> nommer le fichier d'en-tête précompilé
+/Fr[fichier] nommer le fichier browser source
+/FR[fichier] nommer le fichier .SBR étendu
+/Fi[fichier] nommer le fichier prétraité/Fd : <fichier> nommer le fichier .PDB
+/Fe : <fichier> nommer le fichier exécutable
+/Fm : <fichier> nommer le fichier de mappage
+/Fo : <fichier> nommer le fichier objet /Fp : <fichier> nommer le fichier .PCH
+/FR : <fichier> nommer le fichier .SBR étendu
+/Fi : <fichier> nommer le fichier prétraité
+/doc[fichier] traiter les commentaires de documentation XML et nommer éventuellement le fichier .xdc
+
+                              -PRÉPROCESSEUR-
+
+/AI<rép> ajouter au chemin de recherche des assemblys
+/FU<fichier> utilisation forcée d'un assembly/module 
+/C ne pas supprimer les commentaires    /D<nom>{=|#}<texte> définir une macro
+/E prétraiter dans stdout               /EP prétraiter dans stdout, sans #line
+/P prétraiter dans un fichier           
+/Fx fusionner le code injecté dans un fichier
+/FI<fichier> nommer le fichier Include forcé
+/U<nom> supprimer la macro prédéfinie   
+/u supprimer toutes les macros prédéfinies
+/I<rép> ajouter au chemin de recherche Include
+/X ignorer les "places standard"        
+/PH permet de générer #pragma file_hash durant le prétraitement
+
+                                -LANGUE-
+
+/std:<c++14|c++17|c++latest> Version C++ standard
+    c++14 - ISO/IEC 14882:2014 (par défaut)
+    c++17 - ISO/IEC 14882:2017
+    c++latest - dernière ébauche de normalisation (ensemble de fonctionnalités susceptible de changer)
+/permissive[-] permet la compilation du code non conforme (ensemble de fonctionnalités susceptible de changer) (actif par défaut)
+/Ze permet d'activer les extensions (par défaut)
+/Za permet de désactiver les extensions 
+/ZW permet d'activer les extensions de langage WinRT
+/Zs vérification syntaxique uniquement  
+/Zc:arg1[,arg2] conformité au langage C++, où les arguments peuvent être :
+  forScope[-]           permet d'appliquer la norme C++ pour les règles de portée
+  wchar_t[-]            wchar_t est le type natif et non un typedef
+  auto[-]               permet d'appliquer la nouvelle signification C++ standard pour auto
+  trigraphs[-]          permet d'activer les trigraphes (désactivés par défaut)
+  rvalueCast[-]         permet d'appliquer les règles de conversion de type explicite standard C++
+  strictStrings[-]      permet de désactiver la conversion de littéral
+                        de chaîne en [char|wchar_t]* (désactivée par défaut)
+  implicitNoexcept[-]   permet d'activer un noexcept implicite sur les fonctions obligatoires
+  threadSafeInit[-]     permet l'initialisation statique locale thread-safe
+  inline[-]             remove unreferenced function or data if it is
+                        COMDAT or has internal linkage only (off by default)
+  sizedDealloc[-]       enable C++14 global sized deallocation
+                        functions (on by default)
+  throwingNew[-]        suppose que l'opérateur new lève une exception en cas d'échec (désactivé par défaut)
+  referenceBinding[-]   une variable temporaire n'est pas liée à une référence Ivalue
+                        non const (désactivé par défaut)
+  twoPhase-             permet de désactiver la recherche de nom en deux phases
+  ternary[-]            permet d'appliquer les règles C++11 pour l'opérateur conditionnel (option désactivée par défaut)
+  noexceptTypes[-]      permet d'appliquer les règles de noexcept C++17 (activé par défaut dans C++17 ou version ultérieure)
+  alignedNew[-]         permet d'activer l'alignement C++17 des objets alloués dynamiquement (activé par défaut)
+/await pour activer l'extension des fonctions pouvant être reprises
+/constexpr:depth<N>     limite de profondeur de récursivité pour l'évaluation de constexpr (valeur par défaut : 512)
+/constexpr:backtrace<N> permet d'afficher N évaluations de constexpr dans les diagnostics (valeur par défaut : 10)
+/constexpr:steps<N>     permet de mettre fin à l'évaluation de constexpr après N étapes (valeur par défaut : 100 000)
+/Zi permet d'activer les informations de débogage
+/Z7 permet d'activer les informations de débogage selon l'ancien format
+/Zo[-] permet de générer des informations de débogage plus détaillées pour du code optimisé (activé par défaut)
+/ZH:SHA_256             permet d'utiliser SHA256 pour la somme de contrôle du fichier dans les informations de débogage (expérimental)
+/Zp[n] permet de compresser les structs à la limite n-octet
+/Zl permet d'omettre le nom de bibliothèque par défaut dans .OBJ
+/vd{0|1|2} permet de désactiver/d'activer vtordisp
+/vm<x> type des pointeurs vers les membres
+/ZI activer les inform. de débogage de l'opér. Modifier & Continuer
+/openmp activer les extensions de langage OpenMP 2.0
+
+                              -DIVERS-
+
+@<fichier> fichier réponse des options  /?, /help afficher ce message d'aide
+/bigobj générer un format d'objet étendu
+/c compiler uniquement, pas d'édition des liens
+/errorReport:option Signaler les erreurs internes du compilateur à Microsoft
+    none - ne pas envoyer le rapport                
+    prompt - inviter à envoyer immédiatement le rapport
+    queue - lors de la prochaine ouverture de session d'un administrateur, inviter à envoyer le rapport (par défaut)
+    send - envoyer le rapport automatiquement         
+/FC utiliser des chemins complets dans les diagnostics
+/H<num> longueur maximale du nom externe
+/J type de caractère par défaut non signé
+/MP[n] utiliser jusqu'à 'n' processus pour la compilation
+/nologo supprimer le message de copyright
+/showIncludes afficher les noms de fichiers Include
+/Tc<fichier source> compiler le fichier comme .c
+/Tp<fichier source> compiler le fichier comme .cpp
+/TC compiler tous les fichiers comme .c 
+/TP compiler tous les fichiers comme .cpp
+/V<string> définir la chaîne de version /Yc[fichier] créer un fichier .PCH
+/Yd placer les informations de débogage dans chaque .OBJ
+/Yl[sym] injecter la référence .PCH pour la bibliothèque de débogage
+/Yu[fichier] utiliser le fichier .PCH   /Y- désactiver toutes les options PCH
+/Zm<n> mémoire max. allouée (% de la valeur par défaut)
+/FS utilisation forcée de MSPDBSRV.EXE  
+/source-charset:<nom_iana>|.nnnn définit le jeu de caractères source
+/execution-charset:<nom_iana>|.nnnn définit le jeu de caractères d'exécution
+/utf-8 définit le jeu de caractères source et d'exécution à UTF-8
+/validate-charset[-] valide les fichiers UTF-8 uniquement pour les caractères conformes
+
+                                -ÉDITION DES LIENS-
+
+/LD Créer une .DLL                      
+/LDd Créer une bibliothèque .DLL de débogage
+/LN Créer un .netmodule                 /F<num> définir la taille de la pile
+/link [options et bibliothèques de l'Éditeur de liens]
+/MD lier avec MSVCRT.LIB                /MT lier avec LIBCMT.LIB
+/MDd lier avec la bibliothèque de débogage MSVCRTD.LIB
+/MTd lier avec la bibliothèque de débogage LIBCMTD.LIB
+
+                              -ANALYSE DU CODE-
+
+/analyze[-] Activer l'analyse native    
+/analyze:quiet[-] Aucun avertissement sur la console
+/analyze:log<nom> Avertissements sur le fichier
+/analyze:autolog Enregistrer le journal sur *.pftlog
+/analyze:autolog:ext<ext> Enregistrer le journal sur *.<ext>
+/analyze:autolog- Pas de fichier journal/analyze:WX- Avertissements récupérables
+/analyze:stacksize<num> Frame de pile maximal
+/analyze:max_paths<num> Chemins d'accès maximum
+/analyze:only Analyse, pas de génération de code
+
+                              -DIAGNOSTICS-
+
+/diagnostics:<arguments,...> contrôle le format des messages de diagnostic :
+             classic   - conserve le format antérieur
+             column[-] - affiche les informations de la colonne
+             caret[-]  - affiche la colonne et la ligne de code source indiquée
+/Wall activer tous les avertissements   
+/w   permet de désactiver tous les avertissements
+/W<n> définir le niveau d'avertissement (par défaut n=1)
+/Wv:xx[.yy[.zzzzz]] désactiver les avertissements introduits après la version xx.yy.zzzzz
+/WX traiter les avertissements comme des erreurs
+/WL activer les diagnostics sur une ligne
+/wd<n> désactiver l'avertissement n     
+/we<n> traiter l'avertissement n comme une erreur
+/wo<n> émettre l'avertissement n une fois
+/w<l><n> définir le niveau d'avertissement 1-4 pour n
+/external:I <path>      - emplacement des en-têtes externes
+/external:env:<var>    - variable d'environnement avec des emplacements d'en-têtes externes
+/external:anglebrackets- permet de traiter tous les en-têtes inclus via <> en tant qu'en-têtes externes
+/external:W<n>          - niveau d'avertissement des en-têtes externes
+/external:templates[-]  - permet d'évaluer le niveau d'avertissement à travers la chaîne d'instanciation de modèle
+/sdl activer des avertissements et des fonctionnalités de sécurité supplémentaires
+

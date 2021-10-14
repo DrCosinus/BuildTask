@@ -134,11 +134,11 @@ namespace BuildTask.Compilers
                 .Where(c => c.HasValue)
                 .Select(c => c.Value);
 
-            Log.WriteLine($"Found {vsVersionCandidates.Count()} version(s) of visual studio:");
-            foreach (var c in vsVersionCandidates)
-            {
-                Log.WriteLine($"  {c.asString}");
-            }
+            //Log.WriteLine($"Found {vsVersionCandidates.Count()} version(s) of visual studio:");
+            //foreach (var c in vsVersionCandidates)
+            //{
+            //    Log.WriteLine($"  {c.asString}");
+            //}
 
             var latestVSVersion = vsVersionCandidates.OrderBy(v => v).LastOrDefault();
 
