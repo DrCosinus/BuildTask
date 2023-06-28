@@ -190,12 +190,12 @@ namespace BuildTask.Compilers
         {
             var kitVersions = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Kits\Installed Roots").GetSubKeyNames();
             // FIXME: for now, we return the last one...
-            return kitVersions.Where(s => s.StartsWith("10.")).Last();
+            return kitVersions.Where(s => s.StartsWith("10.") && Directory.Exists($@"{Windows10KitBasePath}{"include"}\{ s }")).Last();
         }
 
         private VisualStudioInfo visualStudioInfo;
         private static string Windows10KitBasePath => Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots", "KitsRoot10", "") as string;
-        private static string Windows10KitPath(string _group) => $@"{Windows10KitBasePath}\{_group}\{ LatestWindows10Kit() }";
+        private static string Windows10KitPath(string _group) => $@"{Windows10KitBasePath}{_group}\{ LatestWindows10Kit() }";
         //private static string DotNetFrameworkPath => $@"{WindowsKitPath}\NETFXSDK\4.6.1"; // should be deduced
 
         protected override void SetupEnvironmentVariables()
